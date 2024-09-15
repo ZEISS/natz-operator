@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/golang/mock v1.6.0
 	github.com/golangci/golangci-lint v1.56.2
-	mvdan.cc/gofumpt v0.6.0
+	mvdan.cc/gofumpt v0.7.0
 )
 
 require (
