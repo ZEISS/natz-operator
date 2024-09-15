@@ -1,0 +1,8 @@
+# Default values
+
+# -- Provide a name in place of `natz-operator`
+nameOverride: natz-operator
+# -- String to fully override `"natz-operator.fullname"`
+fullnameOverride: ""
+# -- Override the Kubernetes version, which is used to evaluate certain manifests
+kubeVersionOverride: ""
