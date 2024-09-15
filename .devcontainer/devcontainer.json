@@ -1,5 +1,5 @@
 {
-  "name": "zeiss/template-go",
+  "name": "zeiss/natz-operator",
   "build": {
     "dockerfile": "Dockerfile",
     // Update 'VARIANT' to pick an Ubuntu version: jammy / ubuntu-22.04, focal / ubuntu-20.04, bionic /ubuntu-18.04
@@ -12,7 +12,9 @@
   "postCreateCommand": "bash scripts/postCreateCommand.sh",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/go:1": {}
+    "ghcr.io/devcontainers/features/go:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+    "ghcr.io/dhoeric/features/k9s:1": {}
   },
   "customizations": {
     "vscode": {

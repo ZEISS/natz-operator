@@ -6,7 +6,7 @@ builds:
 release:
   header: |
     ## Changelog ({{ .Date }})
-    
+
     Welcome to this new release! We hope you enjoy the changes we've made.
 changelog:
   groups:
