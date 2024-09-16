@@ -19,6 +19,24 @@ builds:
     ldflags:
         - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     no_unique_dist_dir: true
+  -
+    id: account-server
+    binary: account-server-{{.Os}}-{{.Arch}}
+    main: cmd/account-server/main.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    ignore:
+        - goos: darwin
+          goarch: 386
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+        - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    no_unique_dist_dir: true
   
 archives:
   -
@@ -26,6 +44,11 @@ archives:
     builds:
       - operator
     name_template: "operator_{{.Version}}_{{.Os}}_{{.Arch}}"
+  -
+    id: account-server
+    builds:
+      - account-server
+    name_template: "account_server_{{.Version}}_{{.Os}}_{{.Arch}}"
 
 dockers:
   -
@@ -45,6 +68,24 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--build-arg=BINARY=operator-linux-amd64"
+      - "--platform=linux/amd64"
+  -
+    dockerfile: Dockerfile.nonroot
+    goos: linux
+    goarch: amd64
+    ids:
+      - account-server
+    image_templates:
+      - "ghcr.io/zeiss/{{.ProjectName}}/account-server:latest"
+      - "ghcr.io/zeiss/{{.ProjectName}}/account-server:{{.Tag}}"
+      - "ghcr.io/zeiss/{{.ProjectName}}/account-server"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--build-arg=BINARY=account-server-linux-amd64"
       - "--platform=linux/amd64"
 
 gomod:

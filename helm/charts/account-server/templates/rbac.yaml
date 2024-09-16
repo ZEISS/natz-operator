@@ -1,0 +1,25 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "account-server.fullname" . }}
+rules:
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsaccounts
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "typhoon.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "typhoon.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "account-server.serviceAccountName" . }}
