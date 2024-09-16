@@ -1,0 +1,175 @@
+# Default values
+
+# -- Provide a name in place of `natz-operator`
+nameOverride: natz-operator
+# -- String to fully override `"natz-operator.fullname"`
+fullnameOverride: ""
+# -- Override the Kubernetes version, which is used to evaluate certain manifests
+kubeVersionOverride: ""
+
+## Custom resource configuration
+crds:
+  # -- Install and upgrade CRDs
+  install: true
+  # -- Keep CRDs on chart uninstall
+  keep: true
+  # -- Annotations to be added to all CRDs
+  annotations: {}
+
+## Globally shared configuration
+global:
+  # -- Common labels for the all resources
+  additionalLabels: {}
+    # app: natz
+
+  # Default image used by all components
+  image:
+    # -- If defined, a repository applied to all NATZ deployments
+    repository: ghcr.io/zeiss/natz-operator/operator
+    # -- Overrides the global natz image tag whose default is the chart appVersion
+    tag: ""
+    # -- If defined, a imagePullPolicy applied to all natz deployments
+    imagePullPolicy: IfNotPresent
+
+  # -- Secrets with credentials to pull images from a private registry
+  imagePullSecrets: []
+
+  # -- Labels for the all deployed pods
+  podLabels: {}
+
+   # -- Annotations for the all deployed pods
+  podAnnotations: {}
+
+  # -- Toggle and define pod-level security context.
+  # @default -- `{}` (See [values.yaml])
+  securityContext: {}
+  #  runAsUser: 999
+  #  runAsGroup: 999
+  #  fsGroup: 999
+
+  # -- Mapping between IP and hostnames that will be injected as entries in the pod's hosts files
+  hostAliases: []
+  # - ip: 10.20.30.40
+  #   hostnames:
+  #   - git.myhostname
+
+  networkPolicy:
+    # -- Create NetworkPolicy objects for all components
+    create: false
+    # -- Default deny all ingress traffic
+    defaultDenyIngress: false
+
+## NATZ Configs
+configs:
+
+## NATZ Controller
+controller:
+  # -- NATZ controller name string
+  name: natz-controller
+
+  # -- The number of natz controller pods to run.
+  # Additional replicas will cause sharding of managed clusters across number of replicas.
+  replicas: 1
+
+  ## NATZ controller image
+  image:
+    # -- Repository to use for the natz controller
+    # @default -- `""` (defaults to global.image.repository)
+    repository: ""
+    # -- Tag to use for the natz controller
+    # @default -- `""` (defaults to global.image.tag)
+    tag: ""
+    # -- Image pull policy for the natz controller
+    # @default -- `""` (defaults to global.image.imagePullPolicy)
+    imagePullPolicy: ""
+
+  # -- Secrets with credentials to pull images from a private registry
+  # @default -- `[]` (defaults to global.imagePullSecrets)
+  imagePullSecrets: []
+
+  # -- Additional command line arguments to pass to natz controller
+  extraArgs: []
+
+  # -- Environment variables to pass to natz controller
+  env: []
+
+  # -- envFrom to pass to natz controller
+  # @default -- `[]` (See [values.yaml])
+  envFrom: []
+  # - configMapRef:
+  #     name: config-map-name
+  # - secretRef:
+  #     name: secret-name
+
+  # -- Annotations to be added to natz controller pods
+  podAnnotations: {}
+
+  # -- Labels to be added to natz controller pods
+  podLabels: {}
+
+   # -- Additional volumes to the natz controller pod
+  volumes: []
+
+  # -- [Node selector]
+  nodeSelector: {}
+
+  # -- [Tolerations] for use with node taints
+  tolerations: []
+
+  # -- Assign custom [affinity] rules to the deployment
+  affinity: {}
+
+  # -- natz controller listening port
+  containerPort: 8081
+
+  # -- Metrics listening port
+  metricsPort: 8080
+
+  # Rediness probe for natz controller
+  ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+  readinessProbe:
+    # -- Minimum consecutive failures for the [probe] to be considered failed after having succeeded
+    failureThreshold: 3
+    # -- Number of seconds after the container has started before [probe] is initiated
+    initialDelaySeconds: 10
+    # -- How often (in seconds) to perform the [probe]
+    periodSeconds: 10
+    # -- Minimum consecutive successes for the [probe] to be considered successful after having failed
+    successThreshold: 1
+    # -- Number of seconds after which the [probe] times out
+    timeoutSeconds: 1
+
+  # -- Assign custom [TopologySpreadConstraints] rules to the natz controller
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  ## If labelSelector is left out, it will default to the labelSelector configuration of the deployment
+  topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: topology.kubernetes.io/zone
+  #   whenUnsatisfiable: DoNotSchedule
+
+  # -- Priority class for the natz controller pods
+  priorityClassName: ""
+
+  # -- Resource limits and requests for the natz controller pods
+  resources: {}
+  #  limits:
+  #    cpu: 500m
+  #    memory: 512Mi
+  #  requests:
+  #    cpu: 250m
+  #    memory: 256Mi
+
+  serviceAccount:
+    # -- Create a service account for the natz controller
+    create: true
+    # -- Service account name
+    name: natz-controller
+    # -- Annotations applied to created service account
+    annotations: {}
+    # -- Labels applied to created service account
+    labels: {}
+    # -- Automount API credentials for the Service Account
+    automountServiceAccountToken: true
+
+  # -- Init containers to add to the natz controller pod
+  initContainers: []

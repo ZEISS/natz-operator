@@ -1,13 +1,58 @@
-before:
-  hooks:
-    - go mod tidy
-builds:
-  - skip: true
-release:
-  header: |
-    ## Changelog ({{ .Date }})
+project_name: natz-operator
 
-    Welcome to this new release! We hope you enjoy the changes we've made.
+builds:
+  -
+    id: operator
+    binary: operator-{{.Os}}-{{.Arch}}
+    main: cmd/operator/main.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    ignore:
+        - goos: darwin
+          goarch: 386
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+        - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    no_unique_dist_dir: true
+  
+archives:
+  -
+    id: operator
+    builds:
+      - operator
+    name_template: "operator_{{.Version}}_{{.Os}}_{{.Arch}}"
+
+dockers:
+  -
+    dockerfile: Dockerfile.nonroot
+    goos: linux
+    goarch: amd64
+    ids:
+      - operator
+    image_templates:
+      - "ghcr.io/zeiss/{{.ProjectName}}/operator:latest"
+      - "ghcr.io/zeiss/{{.ProjectName}}/operator:{{.Tag}}"
+      - "ghcr.io/zeiss/{{.ProjectName}}/operator"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--build-arg=BINARY=operator-linux-amd64"
+      - "--platform=linux/amd64"
+
+gomod:
+  proxy: false
+
+release:
+  draft: false
+
 changelog:
   groups:
     - title: Features
@@ -24,3 +69,9 @@ changelog:
       - "^docs:"
       - typo
       - (?i)foo
+
+snapshot:
+  name_template: "{{.Tag}}"
+
+checksum:
+  name_template: "octopinger_go_checksums.txt"

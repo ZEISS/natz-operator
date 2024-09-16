@@ -1,0 +1,95 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsaccounts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsaccounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsoperators
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsoperators/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsoperators/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsusers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsusers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - natz.zeiss.com
+  resources:
+  - natsusers/status
+  verbs:
+  - get
+  - patch
+  - update

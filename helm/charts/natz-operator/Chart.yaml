@@ -1,10 +1,11 @@
 apiVersion: v2
-appVersion: 0.0.0
 type: application
 kubeVersion: ">=1.28.0-0"
-description: A helm chart for the natz-operator that provides NATS accounting.
+description: |
+  A helm chart for the natz-operator that provides NATS accounting.
 name: natz-operator
-version: 0.0.0
+version: 0.0.1
+appVersion: "0.0.1"
 home: https://github.com/zeiss/natz-operator
 sources:
   - https://github.com/zeiss/natz-operator/tree/main/helm/charts/natz-operator

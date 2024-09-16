@@ -1,0 +1,11 @@
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsUser
+metadata:
+  labels:
+    app.kubernetes.io/name: natsuser
+    app.kubernetes.io/instance: natsuser-sample
+    app.kubernetes.io/part-of: natz-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: natz-operator
+  name: natsuser-sample
+spec:

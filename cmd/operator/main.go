@@ -1,4 +1,4 @@
-package operator
+package main
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	natzv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
+	"github.com/zeiss/natz-operator/controllers"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -86,7 +87,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	err = setupControllers(f, mgr)
+	err = setupControllers(mgr)
 	if err != nil {
 		return err
 	}
@@ -110,7 +111,22 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func setupControllers(f *flags, mgr ctrl.Manager) error {
+func setupControllers(mgr ctrl.Manager) error {
+	err := controllers.NewNatsOperatorReconciler(mgr).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
+	err = controllers.NewNatsAccountReconciler(mgr).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
+	err = controllers.NewNatsUserReconciler(mgr).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
