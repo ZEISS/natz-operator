@@ -27,7 +27,7 @@ global:
     # -- If defined, a repository applied to all NATZ deployments
     repository: ghcr.io/zeiss/natz-operator/operator
     # -- Overrides the global natz image tag whose default is the chart appVersion
-    tag: ""
+    tag: "latest"
     # -- If defined, a imagePullPolicy applied to all natz deployments
     imagePullPolicy: IfNotPresent
 
@@ -61,6 +61,8 @@ global:
 
 ## NATZ Configs
 configs:
+
+## 
 
 ## NATZ Controller
 controller:
@@ -151,13 +153,22 @@ controller:
   priorityClassName: ""
 
   # -- Resource limits and requests for the natz controller pods
-  resources: {}
-  #  limits:
-  #    cpu: 500m
-  #    memory: 512Mi
-  #  requests:
-  #    cpu: 250m
-  #    memory: 256Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+
+  # -- Pod security context for the natz controller pods
+  securityContext:
+    # -- Run the natz controller as a non-root user
+    allowPrivilegeEscalation: false
+    # -- Drop capabilities for the natz controller
+    capabilities:
+      drop:
+        - ALL
 
   serviceAccount:
     # -- Create a service account for the natz controller
@@ -173,3 +184,26 @@ controller:
 
   # -- Init containers to add to the natz controller pod
   initContainers: []
+
+  # -- Sidecar containers to add to the natz controller pod
+  kubeRbacProxy:
+    args:
+      - --secure-listen-address=0.0.0.0:8443
+      - --upstream=http://127.0.0.1:8080/
+      - --logtostderr=true
+      - --v=0
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+    image:
+      repository: gcr.io/kubebuilder/kube-rbac-proxy
+      tag: v0.13.1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 128Mi
+      requests:
+        cpu: 5m
+        memory: 64Mi
