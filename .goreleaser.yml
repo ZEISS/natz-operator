@@ -74,4 +74,4 @@ snapshot:
   name_template: "{{.Tag}}"
 
 checksum:
-  name_template: "octopinger_go_checksums.txt"
+  name_template: "natz_checksums.txt"
