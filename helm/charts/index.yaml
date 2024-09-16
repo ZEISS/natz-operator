@@ -2,6 +2,26 @@ apiVersion: v1
 entries:
   natz-operator:
   - apiVersion: v2
+    appVersion: 0.0.1-beta.3
+    created: "2024-09-16T10:13:26.725466164Z"
+    description: 'A helm chart for the natz-operator that provides NATS accounting. '
+    digest: ddb8845d3c0b118ba0dee2579b3dd807e92d923670fca1aeb64597a5e32ca492
+    home: https://github.com/zeiss/natz-operator
+    keywords:
+    - nats
+    - accounting
+    kubeVersion: '>=1.28.0-0'
+    maintainers:
+    - name: Sebastian Doell
+      url: https://github.com/katallaxie
+    name: natz-operator
+    sources:
+    - https://github.com/zeiss/natz-operator/tree/main/helm/charts/natz-operator
+    - https://github.com/zeiss/natz-operator
+    urls:
+    - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-0.0.1-beta.3/natz-operator-0.0.1-beta.3.tgz
+    version: 0.0.1-beta.3
+  - apiVersion: v2
     appVersion: 0.0.1-beta.2
     created: "2024-09-16T09:30:15.911223725Z"
     description: 'A helm chart for the natz-operator that provides NATS accounting. '
@@ -21,4 +41,4 @@ entries:
     urls:
     - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-0.0.1-beta.2/natz-operator-0.0.1-beta.2.tgz
     version: 0.0.1-beta.2
-generated: "2024-09-16T09:30:15.911234204Z"
+generated: "2024-09-16T10:13:26.725481353Z"
