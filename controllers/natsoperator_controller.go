@@ -39,6 +39,7 @@ func NewNatsOperatorReconciler(mgr ctrl.Manager) *NatsOperatorReconciler {
 //+kubebuilder:rbac:groups=,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile ...
+// nolint:gocyclo
 func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -81,6 +82,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	for {
+		// nolint:gocritic
 		if err := r.Get(ctx, systemAccountName, systemAccount); errors.IsNotFound(err) {
 			logger.Info("creating system account")
 			systemAccount.Name = systemAccountName.Name
@@ -134,6 +136,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		Name:      fmt.Sprintf("%v-jwt", req.Name),
 	}
 	for {
+		// nolint:gocritic
 		if err := r.Get(ctx, systemUserName, systemUser); errors.IsNotFound(err) {
 			logger.Info("creating jwt system user")
 			systemUser.Name = systemUserName.Name
@@ -230,6 +233,7 @@ func (r *NatsOperatorReconciler) reconcileServerConfigSnipped(ctx context.Contex
 	return r.Update(ctx, serverConfig)
 }
 
+// nolint:gocyclo
 func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, req ctrl.Request, operator *natsv1alpha1.NatsOperator) (bool, error) {
 	// Try reconcile the secret containing the seed key for the operator
 	logger := log.FromContext(ctx)
@@ -277,6 +281,7 @@ func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, req ctrl.R
 	return !hasSecret || hasChanges, nil
 }
 
+// nolint:gocyclo
 func (r *NatsOperatorReconciler) reconcileKey(ctx context.Context, secret *corev1.Secret, operator *natsv1alpha1.NatsOperator) (bool, error) {
 	logger := log.FromContext(ctx)
 	keys, needsKeyUpdate, err := extractOrCreateKeys(secret, nkeys.CreateOperator)
@@ -330,6 +335,7 @@ func (r *NatsOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// nolint:gocyclo
 func extractOrCreateKeys(secret *corev1.Secret, generator func() (nkeys.KeyPair, error)) (nkeys.KeyPair, bool, error) {
 	var keys nkeys.KeyPair
 	needsKeyUpdate := true

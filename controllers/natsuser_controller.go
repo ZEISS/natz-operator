@@ -48,6 +48,7 @@ func NewNatsUserReconciler(mgr ctrl.Manager) *NatsUserReconciler {
 //+kubebuilder:rbac:groups=natz.zeiss.com,resources=natsusers/finalizers,verbs=update
 
 // Reconcile ...
+// nolint:gocyclo
 func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -111,6 +112,7 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	return ctrl.Result{}, err
 }
 
+// nolint:gocyclo
 func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, req ctrl.Request, user *natsv1alpha1.NatsUser, signerSecret *corev1.Secret) (*corev1.Secret, error) {
 	logger := log.FromContext(ctx)
 	keySecret := &corev1.Secret{}
@@ -157,6 +159,7 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, req ctrl.Reque
 	return keySecret, nil
 }
 
+// nolint:gocyclo
 func (r *NatsUserReconciler) reconcileKey(ctx context.Context, secret *corev1.Secret, account *natsv1alpha1.NatsUser, signer []byte) (bool, error) {
 	logger := log.FromContext(ctx)
 	keys, needsKeyUpdate, err := extractOrCreateKeys(secret, nkeys.CreateUser)
@@ -172,7 +175,7 @@ func (r *NatsUserReconciler) reconcileKey(ctx context.Context, secret *corev1.Se
 	needsClaimsUpdate := secret.Data == nil
 	signerKp, err := nkeys.FromSeed(signer)
 	if err != nil {
-		return false, fmt.Errorf("failed decoding seed: %v, signer: %v", err, signer)
+		return false, fmt.Errorf("failed decoding seed: %w, signer: %v", err, signer)
 	}
 
 	if secret.Data != nil {
