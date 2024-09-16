@@ -206,7 +206,7 @@ func (r *NatsOperatorReconciler) reconcileServerConfigSnipped(ctx context.Contex
 		logger.Info("creating server config")
 		serverConfig.Namespace = req.Namespace
 		serverConfig.Name = serverConfigName.Name
-		serverConfig.Type = "deinstapel.de/nats-configuration"
+		serverConfig.Type = "natz.zeiss.com/nats-configuration"
 		hasSecret = false
 	} else if err != nil {
 		return err
