@@ -63,7 +63,7 @@ jobs:
           DIST_DIR: /tmp/dist
         if: success()
       - run: |
-          go run internal/tools/updater/main.go --file helm/charts/natz-operator/Chart.yaml --version ${{ env.RELEASE_VERSION }}
+          go run internal/updater/main.go --file helm/charts/natz-operator/Chart.yaml --version ${{ env.RELEASE_VERSION }}
       - uses: azure/setup-helm@v4
         with:
           version: v3.11.2
