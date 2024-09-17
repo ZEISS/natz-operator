@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Export ...
 type Export struct {
 	Name                 string              `json:"name,omitempty"`
 	Subject              jwt.Subject         `json:"subject,omitempty"`

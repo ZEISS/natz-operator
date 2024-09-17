@@ -1,4 +1,10 @@
 config:
+  resolver:
+    enabled: true
+    merge:
+      type: full
+      interval: "2m"
+      timeout: "1.9s"
   merge:
     00$include: "../custom-auth/auth.conf"
 container:

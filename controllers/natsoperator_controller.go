@@ -97,6 +97,29 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 					Namespace: req.Namespace,
 					Name:      req.Name,
 				},
+				Exports: []natsv1alpha1.Export{
+					{
+						Name:                 "account-monitoring-services",
+						Subject:              "$SYS.REQ.ACCOUNT.*.*",
+						Type:                 jwt.Service,
+						ResponseType:         jwt.ResponseTypeStream,
+						AccountTokenPosition: 4,
+						Info: jwt.Info{
+							Description: `Request account specific monitoring services for: SUBSZ, CONNZ, LEAFZ, JSZ and INFO`,
+							InfoURL:     "https://docs.nats.io/nats-server/configuration/sys_accounts",
+						},
+					},
+					{
+						Name:                 "account-monitoring-streams",
+						Subject:              "$SYS.ACCOUNT.*.>",
+						Type:                 jwt.Stream,
+						AccountTokenPosition: 3,
+						Info: jwt.Info{
+							Description: `Account specific monitoring stream`,
+							InfoURL:     "https://docs.nats.io/nats-server/configuration/sys_accounts",
+						},
+					},
+				},
 				Limits: natsv1alpha1.OperatorLimits{
 					NatsLimits: jwt.NatsLimits{
 						Subs:    -1,
@@ -149,18 +172,6 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				AccountRef: corev1.ObjectReference{
 					Namespace: systemAccount.Namespace,
 					Name:      systemAccount.Name,
-				},
-				Permissions: natsv1alpha1.Permissions{
-					Pub: natsv1alpha1.Permission{
-						Allow: []string{"$SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP", "$SYS.REQ.CLAIMS.UPDATE"},
-					},
-					Sub: natsv1alpha1.Permission{
-						Allow: []string{"$SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP"},
-					},
-					Resp: &jwt.ResponsePermission{
-						MaxMsgs: 1,
-						Expires: -1,
-					},
 				},
 				Limits: natsv1alpha1.Limits{
 					NatsLimits: jwt.NatsLimits{
