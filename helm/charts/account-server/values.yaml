@@ -1,8 +1,8 @@
 # Default values
 
-# -- Provide a name in place of `natz-operator`
-nameOverride: natz-operator
-# -- String to fully override `"natz-operator.fullname"`
+# -- Provide a name in place of `account-server`
+nameOverride: account-server
+# -- String to fully override `"account-server.fullname"`
 fullnameOverride: ""
 # -- Override the Kubernetes version, which is used to evaluate certain manifests
 kubeVersionOverride: ""
@@ -64,7 +64,7 @@ configs:
 
 ## 
 
-## NATZ Account Server
+## Account Server
 controller:
   # -- Account server name
   name: account-server
@@ -72,6 +72,14 @@ controller:
   # -- The number of natz controller pods to run.
   # Additional replicas will cause sharding of managed clusters across number of replicas.
   replicas: 1
+
+  # -- SecretName of the NATS credentials
+  secretName: natsoperator-sample-jwt
+
+  # -- NATS configuration
+  nats:
+    # -- NATS URL to connect to the NATS server
+    url: "nats://sample-headless.nats-cluster.svc.cluster.local"
 
   ## Account server image
   image:
@@ -163,12 +171,14 @@ controller:
 
   # -- Pod security context for the natz controller pods
   securityContext:
-    # -- Run the natz controller as a non-root user
-    allowPrivilegeEscalation: false
     # -- Drop capabilities for the natz controller
     capabilities:
+      add:
+        - NET_BIND_SERVICE
       drop:
-        - ALL
+        - all
+      runAsUser: 0
+      runAsGroup: 0
 
   serviceAccount:
     # -- Create a service account for the natz controller
@@ -184,26 +194,3 @@ controller:
 
   # -- Init containers to add to the natz controller pod
   initContainers: []
-
-  # -- Sidecar containers to add to the natz controller pod
-  kubeRbacProxy:
-    args:
-      - --secure-listen-address=0.0.0.0:8443
-      - --upstream=http://127.0.0.1:8080/
-      - --logtostderr=true
-      - --v=0
-    containerSecurityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-    image:
-      repository: gcr.io/kubebuilder/kube-rbac-proxy
-      tag: v0.13.1
-    resources:
-      limits:
-        cpu: 500m
-        memory: 128Mi
-      requests:
-        cpu: 5m
-        memory: 64Mi

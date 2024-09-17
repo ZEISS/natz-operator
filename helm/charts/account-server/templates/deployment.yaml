@@ -17,11 +17,11 @@ spec:
       serviceAccountName: {{ include "account-server.serviceAccountName" . }}
       containers:
       - name: account-server
-        image: {{ default .Values.global.image.repository .Values.controller.image.repository }}:{{ default (include "natz-operator.defaultTag" .) .Values.controller.image.tag }}
+        image: {{ default .Values.global.image.repository .Values.controller.image.repository }}:{{ default (include "account-server.defaultTag" .) .Values.controller.image.tag }}
         args: ["--metrics-bind-address", ":12003", "--health-probe-bind-address", ":12002"]
         env:
         - name: "NATS_URL"
-          value: "nats://${NATS_RELEASE_NAME}-nats-headless.nats-cluster.svc.cluster.local"
+          value: {{ .Values.controller.nats.url }}
         - name: "NATS_CREDS_FILE"
           value: "/etc/nats/user.creds"
         - name: "POD_NAMESPACE"
@@ -33,19 +33,15 @@ spec:
           mountPath: "/etc/nats"
           readOnly: true
         securityContext:
-          capabilities:
-            add:
-            - NET_BIND_SERVICE
-            drop:
-            - all
-          runAsUser: 0
-          runAsGroup: 0
+          allowPrivilegeEscalation: false
       volumes:
       - name: "credentials"
         secret:
           defaultMode: 420
-          secretName: "root-operator-jwt"
+          secretName: {{ .Values.controller.secretName }}
           items:
           - key: "user.creds"
             path: "user.creds"
             mode: 420
+      securityContext:
+        {{- toYaml .Values.controller.securityContext | nindent 8 }}

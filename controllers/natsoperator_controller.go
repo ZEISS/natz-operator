@@ -211,6 +211,7 @@ func (r *NatsOperatorReconciler) reconcileServerConfigSnipped(ctx context.Contex
 	} else if err != nil {
 		return err
 	}
+
 	text := fmt.Sprintf(AUTH_CONFIG_TEMPLATE, operator.Status.JWT, sysacc.Status.PublicKey, sysacc.Status.PublicKey, sysacc.Status.JWT)
 	if !needsRefresh && serverConfig.Data != nil {
 		needsRefresh = needsRefresh || text != string(serverConfig.Data[OPERATOR_CONFIG_FILE])
