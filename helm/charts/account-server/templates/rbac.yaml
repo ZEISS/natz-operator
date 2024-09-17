@@ -1,5 +1,5 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: {{ include "account-server.fullname" . }}
 rules:
@@ -13,13 +13,14 @@ rules:
   - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: {{ include "account-server.fullname" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: {{ include "account-server.fullname" . }}
 subjects:
 - kind: ServiceAccount
   name: {{ include "account-server.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}

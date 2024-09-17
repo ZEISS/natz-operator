@@ -16,9 +16,9 @@ import (
 // NatsAccountServer takes NatsAccount and serves them to a nats server (cluster)
 type NatsAccountServer struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	accountMap map[string]string
-	nc         *nats.Conn
+	Scheme   *runtime.Scheme
+	accounts map[string]string
+	nc       *nats.Conn
 }
 
 //+kubebuilder:rbac:groups=natz.zeiss.com,resources=natsaccounts,verbs=get;list;watch;create;update;patch;delete
@@ -26,9 +26,10 @@ type NatsAccountServer struct {
 // NewNatsAccountServer ...
 func NewNatsAccountServer(mgr ctrl.Manager, nc *nats.Conn) *NatsAccountServer {
 	return &NatsAccountServer{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		nc:     nc,
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		accounts: make(map[string]string),
+		nc:       nc,
 	}
 }
 
@@ -41,16 +42,19 @@ func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, err
 	}
 
+	logger.Info("reconciling account", "account", account.Name)
+
 	if account.DeletionTimestamp != nil {
-		delete(r.accountMap, account.Status.PublicKey)
+		delete(r.accounts, account.Status.PublicKey)
 		return ctrl.Result{}, nil
 	}
 
 	if account.Status.JWT != "" && account.Status.PublicKey != "" {
-		r.accountMap[account.Status.PublicKey] = account.Status.JWT
+		r.accounts[account.Status.PublicKey] = account.Status.JWT
 
 		if r.nc != nil {
 			go func() {

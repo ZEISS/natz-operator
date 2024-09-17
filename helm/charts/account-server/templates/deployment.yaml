@@ -34,6 +34,7 @@ spec:
           readOnly: true
         securityContext:
           allowPrivilegeEscalation: false
+          {{- toYaml .Values.controller.securityContext | nindent 10 }}
       volumes:
       - name: "credentials"
         secret:
@@ -43,5 +44,4 @@ spec:
           - key: "user.creds"
             path: "user.creds"
             mode: 420
-      securityContext:
-        {{- toYaml .Values.controller.securityContext | nindent 8 }}
+       

@@ -177,8 +177,6 @@ controller:
         - NET_BIND_SERVICE
       drop:
         - all
-      runAsUser: 0
-      runAsGroup: 0
 
   serviceAccount:
     # -- Create a service account for the natz controller
