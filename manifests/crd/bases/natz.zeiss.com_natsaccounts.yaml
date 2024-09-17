@@ -48,6 +48,7 @@ spec:
                 type: array
               exports:
                 items:
+                  description: Export ...
                   properties:
                     account_token_position:
                       type: integer

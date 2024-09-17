@@ -9,11 +9,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// ExportType defines the type of import/export.
+type ExportType int
+
+const (
+	// Unknown is used if we don't know the type
+	Unknown ExportType = iota
+	// Stream defines the type field value for a stream "stream"
+	Stream
+	// Service defines the type field value for a service "service"
+	Service
+)
+
 // Export ...
 type Export struct {
 	Name                 string              `json:"name,omitempty"`
 	Subject              jwt.Subject         `json:"subject,omitempty"`
-	Type                 jwt.ExportType      `json:"type,omitempty"`
+	Type                 ExportType          `json:"type,omitempty"`
 	TokenReq             bool                `json:"token_req,omitempty"`
 	Revocations          jwt.RevocationList  `json:"revocations,omitempty"`
 	ResponseType         jwt.ResponseType    `json:"response_type,omitempty"`
@@ -45,8 +57,6 @@ type NatsAccountSpec struct {
 	Exports     []Export           `json:"exports,omitempty"`
 	Limits      OperatorLimits     `json:"limits,omitempty"`
 	Revocations jwt.RevocationList `json:"revocations,omitempty"`
-
-	// FIXME: Scoped signing keys
 }
 
 func (s NatsAccountSpec) ToJWTAccount() jwt.Account {
@@ -54,7 +64,7 @@ func (s NatsAccountSpec) ToJWTAccount() jwt.Account {
 		return &jwt.Export{
 			Name:                 e.Name,
 			Subject:              e.Subject,
-			Type:                 e.Type,
+			Type:                 jwt.ExportType(e.Type),
 			TokenReq:             e.TokenReq,
 			Revocations:          e.Revocations,
 			ResponseType:         e.ResponseType,

@@ -101,7 +101,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 					{
 						Name:                 "account-monitoring-services",
 						Subject:              "$SYS.REQ.ACCOUNT.*.*",
-						Type:                 jwt.Service,
+						Type:                 natsv1alpha1.Service,
 						ResponseType:         jwt.ResponseTypeStream,
 						AccountTokenPosition: 4,
 						Info: jwt.Info{
@@ -112,7 +112,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 					{
 						Name:                 "account-monitoring-streams",
 						Subject:              "$SYS.ACCOUNT.*.>",
-						Type:                 jwt.Stream,
+						Type:                 natsv1alpha1.Stream,
 						AccountTokenPosition: 3,
 						Info: jwt.Info{
 							Description: `Account specific monitoring stream`,
@@ -134,6 +134,9 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			}
 
 			if err := r.Create(ctx, systemAccount); err != nil {
+				for _, e := range systemAccount.Spec.Exports {
+					logger.Info("export", "name", e.Name, "subject", e.Subject, "type", e.Type)
+				}
 				return ctrl.Result{}, err
 			}
 
