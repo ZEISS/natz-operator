@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
@@ -79,12 +80,34 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer nc.Drain()
 	defer nc.Close()
 
-	err = setupControllers(mgr, nc)
+	ac := controllers.NewNatsAccountServer(mgr, nc)
+	err = ac.SetupWithManager(mgr)
 	if err != nil {
 		return err
 	}
+
+	sub, err := nc.Subscribe("$SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP", func(msg *nats.Msg) {
+		accountId := strings.TrimSuffix(strings.TrimPrefix(msg.Subject, "$SYS.REQ.ACCOUNT."), ".CLAIMS.LOOKUP")
+		setupLog.Info("account lookup", "accountId", accountId)
+
+		accountToken, ok := ac.GetJWT(accountId)
+		if !ok {
+			setupLog.Info("account not found", "accountId", accountId)
+			return
+		}
+
+		if err := msg.Respond([]byte(accountToken)); err != nil {
+			setupLog.Error(err, "failed to respond to account lookup", "accountId", accountId)
+		}
+	})
+	if err != nil {
+		return err
+	}
+	defer sub.Drain()
+	defer sub.Unsubscribe()
 
 	//+kubebuilder:scaffold:builders
 
@@ -99,15 +122,6 @@ func run(ctx context.Context) error {
 	setupLog.Info("starting manager")
 	// nolint:contextcheck
 	err = mgr.Start(ctrl.SetupSignalHandler())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func setupControllers(mgr ctrl.Manager, nc *nats.Conn) error {
-	err := controllers.NewNatsAccountServer(mgr, nc).SetupWithManager(mgr)
 	if err != nil {
 		return err
 	}
