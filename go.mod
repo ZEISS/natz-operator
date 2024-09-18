@@ -7,7 +7,7 @@ toolchain go1.23.1
 require (
 	github.com/golang/mock v1.6.0
 	github.com/golangci/golangci-lint v1.61.0
-	github.com/nats-io/jwt/v2 v2.6.0
+	github.com/nats-io/jwt/v2 v2.7.0
 	github.com/nats-io/nats.go v1.37.0
 	github.com/nats-io/nkeys v0.4.7
 	github.com/samber/lo v1.47.0
