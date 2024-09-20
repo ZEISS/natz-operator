@@ -127,8 +127,10 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 						Data:    -1,
 					},
 					AccountLimits: jwt.AccountLimits{
-						Conn:           -1,
-						DisallowBearer: true,
+						Conn:            -1,
+						Exports:         -1,
+						WildcardExports: true,
+						DisallowBearer:  true,
 					},
 				},
 			}
