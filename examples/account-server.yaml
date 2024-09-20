@@ -1,0 +1,3 @@
+controller:
+  nats:
+    url: "nats://nats.knative-eventing.svc.cluster.local"

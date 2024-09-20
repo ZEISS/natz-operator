@@ -1,3 +1,5 @@
+namespaceOverride: "knative-eventing"
+
 config:
   resolver:
     enabled: true

@@ -1,0 +1,21 @@
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsAccount
+metadata:
+  namespace: knative-eventing 
+  name: knative-eventing-account
+spec:
+  operatorRef:
+    name: natsoperator-sample 
+  allowedUserNamespaces:
+  - knative-eventing
+  imports: []
+  exports: []
+  limits: 
+    disk_storage: -1
+    streams: -1
+    conn: -1
+    imports: -1
+    exports: -1
+    subs: -1
+    payload: -1
+    data: -1
