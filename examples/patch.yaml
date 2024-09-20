@@ -1,0 +1,49 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jetstream-ch-dispatcher
+rules:
+  - apiGroups:
+      - messaging.knative.dev
+    resources:
+      - natsjetstreamchannels
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+  - apiGroups:
+      - eventing.knative.dev
+    resources:
+      - eventpolicies
+      - eventpolicies/status
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - messaging.knative.dev
+    resources:
+      - natsjetstreamchannels/status
+      - natsjetstreamchannels/finalizers
+    verbs:
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  # required to log events
+  - apiGroups:
+      - ""
+    resources:
+      - "events"
+    verbs:
+      - create
+      - patch
+      - update
