@@ -1,6 +1,11 @@
 namespaceOverride: "knative-eventing"
 
 config:
+  jetstream:
+    enabled: true
+    fileStore:
+      pvc:
+        size: 2Gi
   resolver:
     enabled: true
     merge:
@@ -9,6 +14,7 @@ config:
       timeout: "1.9s"
   merge:
     00$include: "../custom-auth/auth.conf"
+    debug: true
 container:
   patch:
   - op: add

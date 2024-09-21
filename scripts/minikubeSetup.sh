@@ -3,7 +3,7 @@
 # Install the Knative Serving and Eventing components
 helm install knative zeiss-staging/knative --wait
 # Install the Eventing components
-helm install eventing zeiss-staging/eventing --wait --namespace knative-eventing --create-namespace
+helm install eventing zeiss-staging/eventing --wait
 # Install the NATZ operator
 helm install natz-operator natz-operator/natz-operator --wait --namespace knative-eventing
 # Create operator resources
