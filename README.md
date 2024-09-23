@@ -1,8 +1,6 @@
 # Kubernetes Operator for NATS Accounting
 
 [![Release](https://github.com/ZEISS/natz-operator/actions/workflows/release.yml/badge.svg)](https://github.com/ZEISS/natz-operator/actions/workflows/release.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/ZEISS/natz-operator.svg)](https://pkg.go.dev/github.com/ZEISS/natz-operator)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ZEISS/natz-operator)](https://goreportcard.com/report/github.com/ZEISS/natz-operator)
 [![Taylor Swift](https://img.shields.io/badge/secured%20by-taylor%20swift-brightgreen.svg)](https://twitter.com/SwiftOnSecurity)
 [![Volkswagen](https://auchenberg.github.io/volkswagen/volkswargen_ci.svg?v=1)](https://github.com/auchenberg/volkswagen)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
