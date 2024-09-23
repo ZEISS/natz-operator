@@ -74,6 +74,44 @@ spec:
     data: -1
 ```
 
+## NATS Operator
+
+The operator can be integrated with the NATS operator.
+
+```yaml
+config:
+  jetstream:
+    enabled: true
+    fileStore:
+      pvc:
+        size: 2Gi
+  resolver:
+    enabled: true
+    merge:
+      type: full
+      interval: "2m"
+      timeout: "1.9s"
+  merge:
+    00$include: "../custom-auth/auth.conf"
+    debug: true
+container:
+  patch:
+  - op: add
+    path: "/volumeMounts/-"
+    value:
+      name: auth-config
+      mountPath: "/etc/custom-auth"
+statefulSet:
+  patch:
+  - op: add
+    path: /spec/template/spec/volumes/-
+    value:
+      name: "auth-config"
+      secret:
+        defaultMode: 420
+        secretName: "natsoperator-sample-server-config"
+```
+
 ## License
 
 [Apache 2.0](/LICENSE)

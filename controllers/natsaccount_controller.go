@@ -79,7 +79,9 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 		if issuer.Status.OperatorSecretName == "" {
 			logger.Info("waiting for issuing account secret to appear")
+
 			<-time.After(5 * time.Second)
+
 			continue
 		}
 
@@ -119,6 +121,7 @@ func (r *NatsAccountReconciler) reconcileSecret(ctx context.Context, req ctrl.Re
 	}
 
 	logger.Info("reconciling account keys")
+
 	hasChanges, err := r.reconcileKey(ctx, keySecret, account, signerSecret.Data[OPERATOR_SEED_KEY])
 	if err != nil {
 		return nil, err
