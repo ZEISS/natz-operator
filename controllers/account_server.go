@@ -69,6 +69,7 @@ func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		if err := r.nc.Publish("$SYS.REQ.CLAIMS.UPDATE", []byte(account.Status.JWT)); err != nil {
 			logger.Info("failed to publish claims update", "account", account.Name, "err", err)
+
 			return ctrl.Result{}, err
 		}
 	}
