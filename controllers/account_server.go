@@ -8,6 +8,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/zeiss/pkg/conv"
+	"github.com/zeiss/pkg/utilx"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -61,10 +62,11 @@ func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if account.DeletionTimestamp != nil {
 		r.accounts.Delete(account.Status.PublicKey)
+
 		return ctrl.Result{}, nil
 	}
 
-	if account.Status.JWT != "" && account.Status.PublicKey != "" {
+	if utilx.And(utilx.NotEmpty(account.Status.JWT), utilx.NotEmpty(account.Status.PublicKey)) {
 		r.accounts.Store(account.Status.PublicKey, account.Status.JWT)
 
 		if err := r.nc.Publish("$SYS.REQ.CLAIMS.UPDATE", []byte(account.Status.JWT)); err != nil {

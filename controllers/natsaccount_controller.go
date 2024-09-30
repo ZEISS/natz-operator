@@ -17,6 +17,7 @@ import (
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
+	"github.com/zeiss/pkg/utilx"
 )
 
 // NatsAccountReconciler ...
@@ -83,7 +84,7 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	signerSecret := &corev1.Secret{}
 	for {
-		if issuer.Status.OperatorSecretName == "" {
+		if utilx.Empty(issuer.Status.OperatorSecretName) {
 			logger.Info("waiting for issuing account secret to appear")
 
 			<-time.After(5 * time.Second)
@@ -118,6 +119,7 @@ func (r *NatsAccountReconciler) reconcileSecret(ctx context.Context, req ctrl.Re
 	keySecret := &corev1.Secret{}
 	hasSecret := true
 	hasChanges := false
+
 	if err := r.Get(ctx, req.NamespacedName, keySecret); errors.IsNotFound(err) {
 		keySecret.Namespace = req.Namespace
 		keySecret.Name = req.Name
@@ -148,7 +150,7 @@ func (r *NatsAccountReconciler) reconcileSecret(ctx context.Context, req ctrl.Re
 		}
 	}
 
-	if !hasSecret || hasChanges {
+	if utilx.Or(!hasSecret, hasChanges) {
 		account.Status.AccountSecretName = keySecret.Name
 		account.Status.PublicKey = string(keySecret.Data[OPERATOR_PUBLIC_KEY])
 		account.Status.JWT = string(keySecret.Data[OPERATOR_JWT])

@@ -18,6 +18,7 @@ import (
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
+	"github.com/zeiss/pkg/utilx"
 )
 
 const ACCOUNT_TEMPLATE = `-----BEGIN NATS USER JWT-----
@@ -57,6 +58,7 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, err
 	}
 
@@ -88,9 +90,11 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return ctrl.Result{}, err
 		}
 
-		if issuingAccount.Status.AccountSecretName == "" {
+		if utilx.Empty(issuingAccount.Status.AccountSecretName) {
 			logger.Info("waiting for issuing account secret to appear")
+
 			<-time.After(5 * time.Second)
+
 			continue
 		}
 
@@ -109,7 +113,11 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	_, err := r.reconcileSecret(ctx, req, user, signerSecret)
-	return ctrl.Result{}, err
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
 }
 
 // nolint:gocyclo
@@ -147,15 +155,17 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, req ctrl.Reque
 		}
 	}
 
-	if !hasSecret || hasChanges {
+	if utilx.Or(!hasSecret, hasChanges) {
 		// Update operator status if we encountered changes
 		user.Status.UserSecretName = keySecret.Name
 		user.Status.PublicKey = string(keySecret.Data[OPERATOR_PUBLIC_KEY])
 		user.Status.JWT = string(keySecret.Data[OPERATOR_JWT])
+
 		if err := r.Status().Update(ctx, user); err != nil {
 			return nil, err
 		}
 	}
+
 	return keySecret, nil
 }
 

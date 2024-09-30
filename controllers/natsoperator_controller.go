@@ -163,6 +163,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		Namespace: req.Namespace,
 		Name:      fmt.Sprintf("%v-jwt", req.Name),
 	}
+
 	for {
 		// nolint:gocritic
 		if err := r.Get(ctx, systemUserName, systemUser); errors.IsNotFound(err) {
