@@ -28,6 +28,10 @@ snapshot: ## Create a snapshot release
 release: ## Create a release
 	$(GO_RELEASER) release --clean
 
+.PHONY: up
+up: ## Run the operator locally.
+	air -c .air.toml
+
 .PHONY: install
 install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(GO_KUSTOMIZE) build manifests/crd | kubectl apply -f -

@@ -1,7 +1,6 @@
 apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsAccount
 metadata:
-  namespace: knative-eventing 
   name: knative-eventing-account
 spec:
   operatorRef:

@@ -47,11 +47,13 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+
 		return ctrl.Result{}, err
 	}
 
 	if account.DeletionTimestamp != nil {
 		logger.Info("Processing deletion of account")
+
 		if controllerutil.RemoveFinalizer(account, NATZ_OPERATOR_FINALIZER) {
 			if err := r.Update(ctx, account); err != nil {
 				return ctrl.Result{}, err
@@ -61,22 +63,26 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
+	issuer := &natsv1alpha1.NatsOperator{}
+	if err := r.Get(ctx, client.ObjectKey{
+		Namespace: req.Namespace,
+		Name:      account.Spec.OperatorRef.Name,
+	}, issuer); errors.IsNotFound(err) {
+		return ctrl.Result{}, err
+	}
+
+	if err := controllerutil.SetOwnerReference(issuer, account, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if controllerutil.AddFinalizer(account, NATZ_OPERATOR_FINALIZER) {
 		if err := r.Update(ctx, account); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
 
-	issuer := &natsv1alpha1.NatsOperator{}
 	signerSecret := &corev1.Secret{}
 	for {
-		if err := r.Get(ctx, client.ObjectKey{
-			Namespace: req.Namespace,
-			Name:      account.Spec.OperatorRef.Name,
-		}, issuer); err != nil {
-			return ctrl.Result{}, err
-		}
-
 		if issuer.Status.OperatorSecretName == "" {
 			logger.Info("waiting for issuing account secret to appear")
 
@@ -98,7 +104,11 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	_, err := r.reconcileSecret(ctx, req, account, signerSecret)
-	return ctrl.Result{}, err
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
 }
 
 // nolint:gocyclo
@@ -113,6 +123,7 @@ func (r *NatsAccountReconciler) reconcileSecret(ctx context.Context, req ctrl.Re
 		keySecret.Name = req.Name
 		keySecret.Type = "natz.zeiss.com/nats-account"
 		hasSecret = false
+
 		if err := controllerutil.SetOwnerReference(account, keySecret, r.Scheme); err != nil {
 			return nil, err
 		}
