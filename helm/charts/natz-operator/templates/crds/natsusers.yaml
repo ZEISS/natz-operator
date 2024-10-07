@@ -99,9 +99,6 @@ spec:
                     format: int64
                     type: integer
                   src:
-                    description: |-
-                      TagList is a unique array of lower case strings
-                      All tag list methods lower case the strings in the arguments
                     items:
                       type: string
                     type: array
