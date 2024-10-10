@@ -5,7 +5,7 @@ go 1.22.1
 toolchain go1.23.1
 
 require (
-	github.com/nats-io/jwt/v2 v2.7.0
+	github.com/nats-io/jwt/v2 v2.7.2
 	github.com/nats-io/nats.go v1.37.0
 	github.com/nats-io/nkeys v0.4.7
 	github.com/samber/lo v1.47.0
