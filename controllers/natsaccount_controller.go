@@ -276,11 +276,10 @@ func (r *NatsAccountReconciler) reconcileSecret(ctx context.Context, account *na
 
 	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
 		r.Recorder.Event(account, corev1.EventTypeNormal, conv.String(EventReasonAccountSecretCreateSucceeded), "secret created or updated")
-
 		log.Info("secret created or updated", "operation", op)
 	}
 
-	return err
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

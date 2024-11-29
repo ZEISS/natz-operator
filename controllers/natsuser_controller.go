@@ -285,7 +285,7 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, user *natsv1al
 		log.Info("secret created or updated", "operation", op)
 	}
 
-	return err
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

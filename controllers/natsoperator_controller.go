@@ -205,12 +205,15 @@ func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, ope
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
 		log.Info("system account created or updated", "operation", op)
 	}
 
-	return err
+	return nil
 }
 
 func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
@@ -268,12 +271,15 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 
 		return controllerutil.SetControllerReference(operator, serverConfig, r.Scheme)
 	})
+	if err != nil {
+		return err
+	}
 
 	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
 		log.Info("system account created or updated", "operation", op)
 	}
 
-	return err
+	return nil
 }
 
 func (r *NatsOperatorReconciler) reconcileStatus(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
@@ -387,7 +393,7 @@ func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, operator *
 		return err
 	}
 
-	return err
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
