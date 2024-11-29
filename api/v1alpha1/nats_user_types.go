@@ -6,6 +6,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type UserPhase string
+
+const (
+	UserPhaseNone         UserPhase = ""
+	UserPhasePending      UserPhase = "Pending"
+	UserPhaseCreating     UserPhase = "Creating"
+	UserPhaseSynchronized UserPhase = "Synchronized"
+	UserPhaseFailed       UserPhase = "Failed"
+)
+
 type Permissions struct {
 	Pub  Permission              `json:"pub,omitempty"`
 	Sub  Permission              `json:"sub,omitempty"`
@@ -84,6 +94,10 @@ type NatsUserStatus struct {
 	UserSecretName string `json:"userSecretName,omitempty"`
 	PublicKey      string `json:"publicKey,omitempty"`
 	JWT            string `json:"jwt,omitempty"`
+	// Phase is the current state of the user
+	Phase UserPhase `json:"phase"`
+	// ControlerPaused is used to pause the operator for this user
+	ControlerPaused bool `json:"controlerPaused,omitempty"`
 }
 
 //+kubebuilder:object:root=true

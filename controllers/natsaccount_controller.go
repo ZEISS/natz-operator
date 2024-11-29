@@ -220,7 +220,11 @@ func (r *NatsAccountReconciler) reconcileSecret(ctx context.Context, account *na
 	}
 
 	if !errors.IsNotFound(err) {
-		return nil
+		account.Status.JWT = string(secret.Data[OPERATOR_JWT])
+		account.Status.PublicKey = string(secret.Data[OPERATOR_PUBLIC_KEY])
+		account.Status.AccountSecretName = secret.Name
+
+		return r.Status().Update(ctx, account)
 	}
 
 	keys, err := nkeys.CreateAccount()

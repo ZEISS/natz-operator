@@ -293,10 +293,19 @@ spec:
             properties:
               accountSecretName:
                 type: string
+              controlerPaused:
+                description: ControlerPaused is used to pause the operator for this
+                  account
+                type: boolean
               jwt:
+                type: string
+              phase:
+                description: Phase is the current state of the account
                 type: string
               publicKey:
                 type: string
+            required:
+            - phase
             type: object
         type: object
     served: true

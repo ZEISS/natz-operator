@@ -1,11 +1,9 @@
 apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsUser
 metadata:
-  namespace: knative-eventing
   name: knative-eventing-user
 spec:
   accountRef:
-    namespace: knative-eventing
     name: knative-eventing-account
   limits:
     payload: -1
