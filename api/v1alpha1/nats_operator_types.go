@@ -5,13 +5,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type OperatorPhase string
+
+const (
+	OperatorPhaseNone         OperatorPhase = ""
+	OperatorPhasePending      OperatorPhase = "Pending"
+	OperatorPhaseCreating     OperatorPhase = "Creating"
+	OperatorPhaseSynchronized OperatorPhase = "Synchronized"
+	OperatorPhaseFailed       OperatorPhase = "Failed"
+)
+
 type NatsOperatorSpec struct {
 	SigningKeys jwt.StringList `json:"signing_keys,omitempty"`
 }
+
 type NatsOperatorStatus struct {
-	OperatorSecretName string `json:"operatorSecretName,omitempty"`
-	PublicKey          string `json:"publicKey,omitempty"`
-	JWT                string `json:"jwt,omitempty"`
+	ControlPaused bool          `json:"controlPaused,omitempty"`
+	JWT           string        `json:"jwt"`
+	Phase         OperatorPhase `json:"phase"`
+	PublicKey     string        `json:"publicKey"`
+	SecretName    string        `json:"secretName"`
 }
 
 //+kubebuilder:object:root=true

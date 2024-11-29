@@ -12,7 +12,7 @@ type Permissions struct {
 	Resp *jwt.ResponsePermission `json:"resp,omitempty"`
 }
 
-func (p Permissions) toNats() jwt.Permissions {
+func (p *Permissions) toNats() jwt.Permissions {
 	return jwt.Permissions{
 		Pub:  p.Pub.toNats(),
 		Sub:  p.Sub.toNats(),
@@ -25,7 +25,7 @@ type Permission struct {
 	Deny  jwt.StringList `json:"deny,omitempty"`
 }
 
-func (p Permission) toNats() jwt.Permission {
+func (p *Permission) toNats() jwt.Permission {
 	return jwt.Permission{
 		Allow: p.Allow,
 		Deny:  p.Deny,
@@ -48,7 +48,7 @@ type UserLimits struct {
 	Locale string          `json:"times_location,omitempty"`
 }
 
-func (u UserLimits) toNats() jwt.UserLimits {
+func (u *UserLimits) toNats() jwt.UserLimits {
 	return jwt.UserLimits{
 		Src:    u.Src,
 		Times:  u.Times,
@@ -61,14 +61,14 @@ type Limits struct {
 	jwt.NatsLimits `json:",inline"`
 }
 
-func (l Limits) toNats() jwt.Limits {
+func (l *Limits) toNats() jwt.Limits {
 	return jwt.Limits{
 		UserLimits: l.UserLimits.toNats(),
 		NatsLimits: l.NatsLimits,
 	}
 }
 
-func (s NatsUserSpec) ToNatsJWT() jwt.User {
+func (s *NatsUserSpec) ToNatsJWT() jwt.User {
 	return jwt.User{
 		UserPermissionLimits: jwt.UserPermissionLimits{
 			Permissions:            s.Permissions.toNats(),

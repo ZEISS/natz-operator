@@ -45,12 +45,21 @@ spec:
             type: object
           status:
             properties:
+              controlPaused:
+                type: boolean
               jwt:
                 type: string
-              operatorSecretName:
+              phase:
                 type: string
               publicKey:
                 type: string
+              secretName:
+                type: string
+            required:
+            - jwt
+            - phase
+            - publicKey
+            - secretName
             type: object
         type: object
     served: true

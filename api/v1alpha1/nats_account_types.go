@@ -9,6 +9,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type AccountPhase string
+
+const (
+	AccountPhaseNone         AccountPhase = ""
+	AccountPhasePending      AccountPhase = "Pending"
+	AccountPhaseCreating     AccountPhase = "Creating"
+	AccountPhaseSynchronized AccountPhase = "Synchronized"
+	AccountPhaseFailed       AccountPhase = "Failed"
+)
+
 // ExportType defines the type of import/export.
 type ExportType int
 
@@ -59,7 +69,7 @@ type NatsAccountSpec struct {
 	Revocations jwt.RevocationList `json:"revocations,omitempty"`
 }
 
-func (s NatsAccountSpec) ToJWTAccount() jwt.Account {
+func (s *NatsAccountSpec) ToJWTAccount() jwt.Account {
 	exports := lo.Map(s.Exports, func(e Export, _ int) *jwt.Export {
 		return &jwt.Export{
 			Name:                 e.Name,
@@ -95,6 +105,10 @@ type NatsAccountStatus struct {
 	AccountSecretName string `json:"accountSecretName,omitempty"`
 	PublicKey         string `json:"publicKey,omitempty"`
 	JWT               string `json:"jwt,omitempty"`
+	// Phase is the current state of the account
+	Phase AccountPhase `json:"phase"`
+	// ControlerPaused is used to pause the operator for this account
+	ControlerPaused bool `json:"controlerPaused,omitempty"`
 }
 
 //+kubebuilder:object:root=true
