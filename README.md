@@ -112,6 +112,27 @@ statefulSet:
         secretName: "natsoperator-sample-server-config"
 ```
 
+## Development
+
+You can use [minikube](https://minikube.sigs.k8s.io/docs/) to test the operator.
+
+```shell
+minikube start
+```
+
+The operator can be built and tested using the following commands.
+
+```shell
+make generate
+make install
+```
+
+Then you can start the operator using the following command.
+
+```shell
+make up
+```
+
 ## License
 
 [Apache 2.0](/LICENSE)
