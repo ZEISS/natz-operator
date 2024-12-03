@@ -16,7 +16,7 @@ const (
 type NatsGatewaySpec struct {
 	URL      string                `json:"url"`
 	Name     string                `json:"name,omitempty"`
-	Username SecretValueFromSource `json:"username"`
+	Username string                `json:"username"`
 	Password SecretValueFromSource `json:"password"`
 }
 
