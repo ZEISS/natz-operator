@@ -138,7 +138,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, req ctrl.R
 
 	issuer := &natsv1alpha1.NatsOperator{}
 	issuerName := client.ObjectKey{
-		Namespace: req.Namespace,
+		Namespace: utilx.IfElse(utilx.Empty(account.Spec.OperatorRef.Namespace), req.Namespace, account.Spec.OperatorRef.Namespace),
 		Name:      account.Spec.OperatorRef.Name,
 	}
 
@@ -287,6 +287,5 @@ func (r *NatsAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&natsv1alpha1.NatsAccount{}).
 		Owns(&corev1.Secret{}).
-		Owns(&natsv1alpha1.NatsUser{}).
 		Complete(r)
 }

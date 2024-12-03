@@ -143,7 +143,7 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, req ctrl.Request
 
 	issuer := &natsv1alpha1.NatsAccount{}
 	issuerName := client.ObjectKey{
-		Namespace: req.Namespace,
+		Namespace: utilx.IfElse(utilx.Empty(user.Spec.AccountRef.Namespace), req.Namespace, user.Spec.AccountRef.Namespace),
 		Name:      user.Spec.AccountRef.Name,
 	}
 
@@ -154,7 +154,7 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, req ctrl.Request
 	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, user, func() error {
 		controllerutil.AddFinalizer(user, natsv1alpha1.FinalizerName)
 
-		return controllerutil.SetControllerReference(issuer, user, r.Scheme)
+		return nil
 	})
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, user *natsv1al
 
 	issuer := &natsv1alpha1.NatsAccount{}
 	issuerName := client.ObjectKey{
-		Namespace: user.Namespace,
+		Namespace: utilx.IfElse(utilx.Empty(user.Spec.AccountRef.Namespace), user.Namespace, user.Spec.AccountRef.Namespace),
 		Name:      user.Spec.AccountRef.Name,
 	}
 

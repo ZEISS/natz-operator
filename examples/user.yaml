@@ -4,6 +4,7 @@ metadata:
   name: knative-eventing-user
 spec:
   accountRef:
+    namespace: default
     name: knative-eventing-account
   limits:
     payload: -1
