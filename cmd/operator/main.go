@@ -128,6 +128,11 @@ func setupControllers(mgr ctrl.Manager) error {
 		return err
 	}
 
+	err = controllers.NewNatsGatewayReconciler(mgr).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
