@@ -111,7 +111,7 @@ func (r *NatsGatewayReconciler) reconcileResources(ctx context.Context, req ctrl
 	return nil
 }
 
-func (r *NatsGatewayReconciler) reconcileGateway(ctx context.Context, req ctrl.Request, gateway *natsv1alpha1.NatsGateway) error {
+func (r *NatsGatewayReconciler) reconcileGateway(ctx context.Context, _ ctrl.Request, gateway *natsv1alpha1.NatsGateway) error {
 	log := log.FromContext(ctx)
 
 	log.Info("reconcile status", "name", gateway.Name, "namespace", gateway.Namespace)
