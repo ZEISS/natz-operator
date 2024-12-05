@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -264,6 +265,7 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, user *natsv1al
 		return err
 	}
 	data[OPERATOR_JWT] = []byte(jwt)
+	data[USER_CREDS] = []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, jwt, seed))
 
 	secret.Namespace = user.Namespace
 	secret.Name = secretName.Name
