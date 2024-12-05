@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/zeiss/natz-operator/api/v1alpha1"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
 	"github.com/zeiss/pkg/cast"
 	"github.com/zeiss/pkg/k8s/finalizers"
@@ -81,7 +80,7 @@ func (r *NatsGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	err := r.reconcileResources(ctx, req, gateway)
 	if err != nil {
 		r.Recorder.Event(gateway, corev1.EventTypeWarning, cast.String(EventReasonGatewayFailed), "gateway resources reconciliation failed")
-		gateway.Status.Phase = v1alpha1.GatewayPhaseFailed
+		gateway.Status.Phase = natsv1alpha1.GatewayPhaseFailed
 		return reconcile.Result{}, r.Status().Update(ctx, gateway)
 	}
 
@@ -167,7 +166,7 @@ func (r *NatsGatewayReconciler) reconcileStatus(ctx context.Context, gateway *na
 
 	log.Info("reconcile status", "name", gateway.Name, "namespace", gateway.Namespace)
 
-	phase := v1alpha1.GatewayPhaseNone
+	phase := natsv1alpha1.GatewayPhaseNone
 
 	if gateway.Status.Phase != phase {
 		gateway.Status.Phase = phase

@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -96,6 +97,12 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return reconcile.Result{}, err
 	}
 
+	res, err := r.reconcileServerConfig(ctx, operator)
+	if err != nil {
+		log.Error(err, "failed to reconcile server config", "name", operator.Name, "namespace", operator.Namespace)
+		return res, err
+	}
+
 	return reconcile.Result{}, nil
 }
 
@@ -123,12 +130,6 @@ func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operato
 	err = r.reconcileSystemAccount(ctx, operator)
 	if err != nil {
 		log.Error(err, "failed to reconcile system account", "name", operator.Name, "namespace", operator.Namespace)
-		return err
-	}
-
-	err = r.reconcileServerConfig(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile server config", "name", operator.Name, "namespace", operator.Namespace)
 		return err
 	}
 
@@ -228,7 +229,7 @@ func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, operator
 	return nil
 }
 
-func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
+func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, operator *natsv1alpha1.NatsOperator) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
 
 	log.Info("reconcile server config", "name", operator.Name, "namespace", operator.Namespace)
@@ -241,11 +242,11 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 
 	err := r.Get(ctx, serverConfigName, serverConfig)
 	if err != nil && !errors.IsNotFound(err) {
-		return err
+		return reconcile.Result{}, err
 	}
 
 	if !errors.IsNotFound(err) {
-		return err
+		return reconcile.Result{}, nil
 	}
 
 	systemAccount := &natsv1alpha1.NatsAccount{}
@@ -256,7 +257,14 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 
 	err = r.Get(ctx, systemAccountName, systemAccount)
 	if err != nil && !errors.IsNotFound(err) {
-		return err
+		return reconcile.Result{}, err
+	}
+
+	if systemAccount.Status.Phase != natsv1alpha1.AccountPhaseSynchronized {
+		return reconcile.Result{
+			Requeue:      true,
+			RequeueAfter: time.Second * 1,
+		}, nil
 	}
 
 	serverConfig.Namespace = operator.Namespace
@@ -272,14 +280,14 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 		return controllerutil.SetControllerReference(operator, serverConfig, r.Scheme)
 	})
 	if err != nil {
-		return err
+		return reconcile.Result{}, err
 	}
 
 	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
 		log.Info("system account created or updated", "operation", op)
 	}
 
-	return nil
+	return reconcile.Result{}, nil
 }
 
 func (r *NatsOperatorReconciler) reconcileStatus(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
