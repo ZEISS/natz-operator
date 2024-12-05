@@ -2,6 +2,26 @@ apiVersion: v1
 entries:
   account-server:
   - apiVersion: v2
+    appVersion: 0.9.2
+    created: "2024-12-05T13:44:27.243286357Z"
+    description: 'A helm chart for the account-server that provides NATS accounting. '
+    digest: 1a9d5bda3e3cd59e9b6060e5bcd98dcfe9f60aff01c0c9f5dd07c6e22a4394af
+    home: https://github.com/zeiss/natz-operator
+    keywords:
+    - nats
+    - accounting
+    kubeVersion: '>=1.26.0-0'
+    maintainers:
+    - name: Sebastian Doell
+      url: https://github.com/katallaxie
+    name: account-server
+    sources:
+    - https://github.com/zeiss/natz-operator/tree/main/helm/charts/account-server
+    - https://github.com/zeiss/natz-operator
+    urls:
+    - https://github.com/ZEISS/natz-operator/releases/download/account-server-0.9.2/account-server-0.9.2.tgz
+    version: 0.9.2
+  - apiVersion: v2
     appVersion: 0.9.1
     created: "2024-12-05T13:07:29.458077559Z"
     description: 'A helm chart for the account-server that provides NATS accounting. '
@@ -242,6 +262,26 @@ entries:
     - https://github.com/ZEISS/natz-operator/releases/download/account-server-0.0.3/account-server-0.0.3.tgz
     version: 0.0.3
   natz-operator:
+  - apiVersion: v2
+    appVersion: 0.9.2
+    created: "2024-12-05T13:44:27.444645644Z"
+    description: 'A helm chart for the natz-operator that provides NATS accounting. '
+    digest: 9a02c4f9d9ec5eeef6e683b668760d91e2ab851677f4c80752946fb01d2e8572
+    home: https://github.com/zeiss/natz-operator
+    keywords:
+    - nats
+    - accounting
+    kubeVersion: '>=1.26.0-0'
+    maintainers:
+    - name: Sebastian Doell
+      url: https://github.com/katallaxie
+    name: natz-operator
+    sources:
+    - https://github.com/zeiss/natz-operator/tree/main/helm/charts/natz-operator
+    - https://github.com/zeiss/natz-operator
+    urls:
+    - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-0.9.2/natz-operator-0.9.2.tgz
+    version: 0.9.2
   - apiVersion: v2
     appVersion: 0.9.1
     created: "2024-12-05T13:07:29.734204785Z"
@@ -542,4 +582,4 @@ entries:
     urls:
     - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-0.0.1-beta.2/natz-operator-0.0.1-beta.2.tgz
     version: 0.0.1-beta.2
-generated: "2024-12-05T13:07:29.73433065Z"
+generated: "2024-12-05T13:44:27.44487285Z"
