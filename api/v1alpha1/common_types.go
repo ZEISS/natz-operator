@@ -5,6 +5,17 @@ import (
 )
 
 const (
+	ConditionTypeSynchronizing = "Sychronizing"
+	ConditionTypeSynchronized  = "Synchronized"
+	ConditionTypeFailed        = "Failed"
+)
+
+const (
+	ConditionReasonCreated      = "Created"
+	ConditionReasonSynchronized = "Synchronized"
+)
+
+const (
 	FinalizerName = "natz.zeiss.com/finalizer"
 )
 

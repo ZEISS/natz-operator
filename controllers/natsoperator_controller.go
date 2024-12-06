@@ -12,14 +12,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
-	"github.com/zeiss/pkg/cast"
+	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/conv"
-	"github.com/zeiss/pkg/k8s/finalizers"
+	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -36,6 +36,7 @@ const (
 	EventReasonOperatorDeleteFailed          EventReason = "OperatorDeleteFailed"
 	EventReasonOperatorSecretCreateSucceeded EventReason = "OperatorSecretCreateSucceeded"
 	EventReasonOperatorSecretCreateFailed    EventReason = "OperatorSecretCreateFailed"
+	EventReasonOperatorSynchronized          EventReason = "OperatorSynchronized"
 )
 
 // NatsOperatorReconciler ...
@@ -64,6 +65,8 @@ func NewNatsOperatorReconciler(mgr ctrl.Manager) *NatsOperatorReconciler {
 func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	log.Info("reconcile operator", "name", req.Name, "namespace", req.Namespace)
+
 	operator := &natsv1alpha1.NatsOperator{}
 	if err := r.Get(ctx, req.NamespacedName, operator); err != nil {
 		// Request object not found, could have been deleted after reconcile request.
@@ -71,30 +74,35 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	if !operator.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("processing deletion of operator")
-
-		if finalizers.HasFinalizer(operator, natsv1alpha1.FinalizerName) {
-			err := r.reconcileDelete(ctx, operator)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		// Delete
-		return reconcile.Result{}, nil
+		return r.reconcileDelete(ctx, operator)
 	}
 
-	// get latest version of the operator
-	if err := r.Get(ctx, req.NamespacedName, operator); err != nil {
-		log.Error(err, "operator not found", "operator", req.NamespacedName)
+	return r.reconcileResources(ctx, operator)
+}
 
-		return reconcile.Result{}, err
-	}
+func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operator *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
 
-	err := r.reconcileResources(ctx, operator)
+	err := r.reconcileStatus(ctx, operator)
 	if err != nil {
-		r.Recorder.Event(operator, corev1.EventTypeWarning, cast.String(EventReasonOperatorCreateFailed), "operator resources reconciliation failed")
-		return reconcile.Result{}, err
+		log.Error(err, "failed to reconcile status", "name", operator.Name, "namespace", operator.Namespace)
+		return ctrl.Result{}, err
+	}
+
+	if err = r.reconcileOperator(ctx, operator); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	err = r.reconcileSecret(ctx, operator)
+	if err != nil {
+		log.Error(err, "failed to reconcile secret", "name", operator.Name, "namespace", operator.Namespace)
+		return ctrl.Result{}, err
+	}
+
+	err = r.reconcileSystemAccount(ctx, operator)
+	if err != nil {
+		log.Error(err, "failed to reconcile system account", "name", operator.Name, "namespace", operator.Namespace)
+		return ctrl.Result{}, err
 	}
 
 	res, err := r.reconcileServerConfig(ctx, operator)
@@ -103,37 +111,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return res, err
 	}
 
-	return reconcile.Result{}, nil
-}
-
-func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	log := log.FromContext(ctx)
-
-	err := r.reconcileStatus(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile status", "name", operator.Name, "namespace", operator.Namespace)
-		return err
-	}
-
-	err = r.reconcileOperator(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile operator", "name", operator.Name, "namespace", operator.Namespace)
-		return err
-	}
-
-	err = r.reconcileSecret(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile secret", "name", operator.Name, "namespace", operator.Namespace)
-		return err
-	}
-
-	err = r.reconcileSystemAccount(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile system account", "name", operator.Name, "namespace", operator.Namespace)
-		return err
-	}
-
-	return nil
+	return r.ManageSuccess(ctx, operator)
 }
 
 func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
@@ -217,19 +195,16 @@ func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, ope
 	return nil
 }
 
-func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	log.FromContext(ctx)
-
-	if controllerutil.AddFinalizer(operator, natsv1alpha1.FinalizerName) {
-		if err := r.Update(ctx, operator); err != nil && !errors.IsNotFound(err) {
-			return err
-		}
+func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, obj *natsv1alpha1.NatsOperator) error {
+	if !controllerutil.ContainsFinalizer(obj, natsv1alpha1.FinalizerName) {
+		controllerutil.AddFinalizer(obj, natsv1alpha1.FinalizerName)
+		return r.Update(ctx, obj)
 	}
 
 	return nil
 }
 
-func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, operator *natsv1alpha1.NatsOperator) (reconcile.Result, error) {
+func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, operator *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	log.Info("reconcile server config", "name", operator.Name, "namespace", operator.Namespace)
@@ -242,11 +217,11 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 
 	err := r.Get(ctx, serverConfigName, serverConfig)
 	if err != nil && !errors.IsNotFound(err) {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	if !errors.IsNotFound(err) {
-		return reconcile.Result{}, nil
+		return ctrl.Result{}, nil
 	}
 
 	systemAccount := &natsv1alpha1.NatsAccount{}
@@ -257,11 +232,11 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 
 	err = r.Get(ctx, systemAccountName, systemAccount)
 	if err != nil && !errors.IsNotFound(err) {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	if systemAccount.Status.Phase != natsv1alpha1.AccountPhaseSynchronized {
-		return reconcile.Result{
+		return ctrl.Result{
 			Requeue:      true,
 			RequeueAfter: time.Second * 1,
 		}, nil
@@ -280,14 +255,14 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 		return controllerutil.SetControllerReference(operator, serverConfig, r.Scheme)
 	})
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
 		log.Info("system account created or updated", "operation", op)
 	}
 
-	return reconcile.Result{}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *NatsOperatorReconciler) reconcileStatus(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
@@ -310,18 +285,19 @@ func (r *NatsOperatorReconciler) reconcileStatus(ctx context.Context, operator *
 	return nil
 }
 
-func (r *NatsOperatorReconciler) reconcileDelete(ctx context.Context, s *natsv1alpha1.NatsOperator) error {
-	log := log.FromContext(ctx)
+func (r *NatsOperatorReconciler) reconcileDelete(ctx context.Context, operator *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
+	// Remove our finalizer from the list.
+	controllerutil.RemoveFinalizer(operator, natsv1alpha1.FinalizerName)
 
-	log.Info("reconcile delete operator", "name", s.Name, "namespace", s.Namespace)
+	if !operator.DeletionTimestamp.IsZero() {
+		// Remove our finalizer from the list.
+		controllerutil.RemoveFinalizer(operator, natsv1alpha1.FinalizerName)
 
-	s.SetFinalizers(finalizers.RemoveFinalizer(s, natsv1alpha1.FinalizerName))
-	err := r.Update(ctx, s)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
+		// Stop reconciliation as the object is being deleted.
+		return ctrl.Result{}, r.Update(ctx, operator)
 	}
 
-	return nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
 // nolint:gocyclo
@@ -404,11 +380,62 @@ func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, operator *
 	return nil
 }
 
+// IsCreating ...
+func (r *NatsOperatorReconciler) IsCreating(obj *natsv1alpha1.NatsOperator) bool {
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+}
+
+// IsSynchronized ...
+func (r *NatsOperatorReconciler) IsSynchronized(obj *natsv1alpha1.NatsOperator) bool {
+	return obj.Status.Phase == natsv1alpha1.OperatorPhaseSynchronized
+}
+
+// ManageSuccess ...
+func (r *NatsOperatorReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
+	if r.IsSynchronized(obj) {
+		return ctrl.Result{}, nil
+	}
+
+	status.SetNatzOperatorCondition(obj, status.NewOperatorSynchronizingCondition(obj))
+
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	if r.IsCreating(obj) {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonOperatorSynchronized), "operator synchronized")
+
+	return ctrl.Result{}, nil
+}
+
+// func (r *NatsOperatorReconciler) waitForSecretSync(obj *corev1.Secret) wait.ConditionWithContextFunc {
+// 	return func(ctx context.Context) (bool, error) {
+// 		newObj := &corev1.Secret{}
+// 		if err := r.Get(ctx, client.ObjectKeyFromObject(obj), newObj); err != nil {
+// 			if errors.IsNotFound(err) {
+// 				return true, nil
+// 			}
+
+// 			return false, err
+// 		}
+
+// 		return equality.Semantic.DeepEqual(obj.Data, newObj.Data), nil
+// 	}
+// }
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *NatsOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&natsv1alpha1.NatsOperator{}).
 		Owns(&natsv1alpha1.NatsAccount{}).
 		Owns(&corev1.Secret{}).
+		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{})).
 		Complete(r)
 }

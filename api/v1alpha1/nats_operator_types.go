@@ -5,6 +5,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Phase is a type that represents the current phase of the operator.
+//
+// +enum
+// +kubebuilder:validation:Enum={None,Pending,Creating,Synchronized,Failed}
 type OperatorPhase string
 
 const (
@@ -20,11 +24,20 @@ type NatsOperatorSpec struct {
 }
 
 type NatsOperatorStatus struct {
-	ControlPaused bool          `json:"controlPaused,omitempty"`
-	JWT           string        `json:"jwt"`
-	Phase         OperatorPhase `json:"phase"`
-	PublicKey     string        `json:"publicKey"`
-	SecretName    string        `json:"secretName"`
+	JWT        string `json:"jwt"`
+	PublicKey  string `json:"publicKey"`
+	SecretName string `json:"secretName"`
+
+	// Conditions is an array of conditions that the operator is currently in.
+	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
+	// Phase is the current phase of the operator.
+	//
+	// +kubebuilder:validation:Enum={None,Pending,Creating,Synchronized,Failed}
+	Phase OperatorPhase `json:"phase"`
+	// ControlPaused is a flag that indicates if the operator is paused.
+	ControlPaused bool `json:"controlPaused,omitempty" optional:"true"`
+	// LastUpdate is the timestamp of the last update.
+	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
 //+kubebuilder:object:root=true
