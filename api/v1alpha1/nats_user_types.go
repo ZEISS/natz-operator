@@ -94,10 +94,16 @@ type NatsUserStatus struct {
 	UserSecretName string `json:"userSecretName,omitempty"`
 	PublicKey      string `json:"publicKey,omitempty"`
 	JWT            string `json:"jwt,omitempty"`
-	// Phase is the current state of the user
+	// Conditions is an array of conditions that the operator is currently in.
+	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
+	// Phase is the current phase of the operator.
+	//
+	// +kubebuilder:validation:Enum={None,Pending,Creating,Synchronized,Failed}
 	Phase UserPhase `json:"phase"`
-	// ControlerPaused is used to pause the operator for this user
-	ControlerPaused bool `json:"controlerPaused,omitempty"`
+	// ControlPaused is a flag that indicates if the operator is paused.
+	ControlPaused bool `json:"controlPaused,omitempty" optional:"true"`
+	// LastUpdate is the timestamp of the last update.
+	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
 //+kubebuilder:object:root=true

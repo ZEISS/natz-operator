@@ -396,7 +396,11 @@ func (r *NatsOperatorReconciler) ManageSuccess(ctx context.Context, obj *natsv1a
 		return ctrl.Result{}, nil
 	}
 
-	status.SetNatzOperatorCondition(obj, status.NewOperatorSynchronizingCondition(obj))
+	status.SetNatzOperatorCondition(obj, status.NewOperatorSychronizedCondition(obj))
+
+	if r.IsCreating(obj) {
+		return ctrl.Result{Requeue: true}, nil
+	}
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
 		return ctrl.Result{}, err

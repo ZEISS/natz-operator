@@ -13,6 +13,7 @@ const (
 const (
 	ConditionReasonCreated      = "Created"
 	ConditionReasonSynchronized = "Synchronized"
+	ConditionReasonFailed       = "Failed"
 )
 
 const (

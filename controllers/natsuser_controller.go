@@ -3,6 +3,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"math"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -17,9 +19,9 @@ import (
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
-	"github.com/zeiss/pkg/cast"
+	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/conv"
-	"github.com/zeiss/pkg/k8s/finalizers"
+	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 )
 
@@ -36,6 +38,7 @@ const (
 	EventReasonUserSecretCreateSucceeded EventReason = "UserSecretCreateSucceeded"
 	EventReasonUserSecretCreateFailed    EventReason = "UserSecretCreateFailed"
 	EventReasonUserSynchronizeFailed     EventReason = "UserSynchronizeFailed"
+	EventReasonUserSynchronized          EventReason = "UserSynchronized"
 )
 
 // NatsUserReconciler reconciles a NatsUser object
@@ -73,17 +76,7 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if !user.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("processing deletion of user")
-
-		if finalizers.HasFinalizer(user, natsv1alpha1.FinalizerName) {
-			err := r.reconcileDelete(ctx, user)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		// Delete
-		return reconcile.Result{}, nil
+		return r.reconcileDelete(ctx, user)
 	}
 
 	// get latest version of the account
@@ -93,50 +86,38 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return reconcile.Result{}, err
 	}
 
-	err := r.reconcileResources(ctx, req, user)
-	if err != nil {
-		r.Recorder.Event(user, corev1.EventTypeWarning, cast.String(EventReasonUserSynchronizeFailed), "user resources reconciliation failed")
-		return reconcile.Result{}, err
-	}
-
-	return reconcile.Result{}, nil
+	return r.reconcileResources(ctx, req, user)
 }
 
-func (r *NatsUserReconciler) reconcileDelete(ctx context.Context, user *natsv1alpha1.NatsUser) error {
-	log := log.FromContext(ctx)
+func (r *NatsUserReconciler) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsUser) (ctrl.Result, error) {
+	// Remove our finalizer from the list.
+	controllerutil.RemoveFinalizer(obj, natsv1alpha1.FinalizerName)
 
-	log.Info("reconcile delete user", "name", user.Name, "namespace", user.Namespace)
+	if !obj.DeletionTimestamp.IsZero() {
+		// Remove our finalizer from the list.
+		controllerutil.RemoveFinalizer(obj, natsv1alpha1.FinalizerName)
 
-	user.SetFinalizers(finalizers.RemoveFinalizer(user, natsv1alpha1.FinalizerName))
-	err := r.Update(ctx, user)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
+		// Stop reconciliation as the object is being deleted.
+		return ctrl.Result{}, r.Update(ctx, obj)
 	}
 
-	return nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
-func (r *NatsUserReconciler) reconcileResources(ctx context.Context, req ctrl.Request, user *natsv1alpha1.NatsUser) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile resources", "name", user.Name, "namespace", user.Namespace)
-
+func (r *NatsUserReconciler) reconcileResources(ctx context.Context, req ctrl.Request, user *natsv1alpha1.NatsUser) (ctrl.Result, error) {
 	if err := r.reconcileStatus(ctx, user); err != nil {
-		log.Error(err, "failed to reconcile status", "name", user.Name, "namespace", user.Namespace)
-		return err
+		return r.ManageError(ctx, user, err)
 	}
 
 	if err := r.reconcileUser(ctx, req, user); err != nil {
-		log.Error(err, "failed to reconcile user", "name", user.Name, "namespace", user.Namespace)
-		return err
+		return r.ManageError(ctx, user, err)
 	}
 
 	if err := r.reconcileSecret(ctx, user); err != nil {
-		log.Error(err, "failed to reconcile secret", "name", user.Name, "namespace", user.Namespace)
-		return err
+		return r.ManageError(ctx, user, err)
 	}
 
-	return nil
+	return r.ManageSuccess(ctx, user)
 }
 
 func (r *NatsUserReconciler) reconcileUser(ctx context.Context, req ctrl.Request, user *natsv1alpha1.NatsUser) error {
@@ -288,6 +269,59 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, user *natsv1al
 	}
 
 	return nil
+}
+
+// IsCreating ...
+func (r *NatsUserReconciler) IsCreating(obj *natsv1alpha1.NatsUser) bool {
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+}
+
+// IsSynchronized ...
+func (r *NatsUserReconciler) IsSynchronized(obj *natsv1alpha1.NatsUser) bool {
+	return obj.Status.Phase == natsv1alpha1.UserPhaseSynchronized
+}
+
+// ManageError ...
+func (r *NatsUserReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsUser, err error) (ctrl.Result, error) {
+	status.SetNatzUserCondition(obj, status.NewUserFailedCondition(obj, err))
+
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
+	}
+
+	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonUserSynchronizeFailed), "user synchronization failed")
+
+	var retryInterval time.Duration
+
+	return reconcile.Result{
+		RequeueAfter: time.Duration(math.Min(float64(retryInterval.Nanoseconds()*2), float64(time.Hour.Nanoseconds()*6))),
+		Requeue:      true,
+	}, nil
+}
+
+// ManageSuccess ...
+func (r *NatsUserReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsUser) (ctrl.Result, error) {
+	if r.IsSynchronized(obj) {
+		return ctrl.Result{}, nil
+	}
+
+	status.SetNatzUserCondition(obj, status.NewUserSychronizedCondition(obj))
+
+	if r.IsCreating(obj) {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonUserSynchronized), "user synchronized")
+
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -37,8 +37,13 @@ func SetNatzOperatorCondition(obj *natsv1alpha1.NatsOperator, condition metav1.C
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
 }
 
-// NewOperatorSynchronizingCondition creates the provisioning started condition in cluster conditions.
-func NewOperatorSynchronizingCondition(obj *natsv1alpha1.NatsOperator) metav1.Condition {
+// SetNatzUserCondition ...
+func SetNatzUserCondition(obj *natsv1alpha1.NatsUser, condition metav1.Condition) {
+	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
+}
+
+// NewOperatorSychronizedCondition creates the provisioning started condition in cluster conditions.
+func NewOperatorSychronizedCondition(obj *natsv1alpha1.NatsOperator) metav1.Condition {
 	return metav1.Condition{
 		Type:               natsv1alpha1.ConditionTypeSynchronized,
 		ObservedGeneration: obj.Generation,
@@ -46,5 +51,29 @@ func NewOperatorSynchronizingCondition(obj *natsv1alpha1.NatsOperator) metav1.Co
 		LastTransitionTime: metav1.Now(),
 		Message:            fmt.Sprintf("the operator has successfully created: %s", obj.Name),
 		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
+}
+
+// NewUserSychronizedCondition creates the provisioning started condition in cluster conditions.
+func NewUserSychronizedCondition(obj *natsv1alpha1.NatsUser) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeSynchronized,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            fmt.Sprintf("the user has successfully created: %s", obj.Name),
+		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
+}
+
+// NewUserFailedCondition creates the provisioning started condition in cluster conditions.
+func NewUserFailedCondition(obj *natsv1alpha1.NatsUser, err error) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeFailed,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            err.Error(),
+		Reason:             natsv1alpha1.ConditionReasonFailed,
 	}
 }
