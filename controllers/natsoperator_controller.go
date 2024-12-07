@@ -337,7 +337,7 @@ func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, operator *
 	}
 
 	token := jwt.NewOperatorClaims(public)
-	token.Operator.SigningKeys = operator.Spec.SigningKeys
+	// token.Operator.SigningKeys = operator.Spec.SigningKeys
 
 	data := map[string][]byte{}
 	data[OPERATOR_SEED_KEY] = seed

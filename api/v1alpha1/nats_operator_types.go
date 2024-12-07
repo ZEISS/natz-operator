@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/nats-io/jwt/v2"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,7 +20,10 @@ const (
 )
 
 type NatsOperatorSpec struct {
-	SigningKeys jwt.StringList `json:"signing_keys,omitempty"`
+	// PublicKey is the public key that should be used to verify the JWT
+	PublicKey corev1.SecretReference `json:"public_key,omitempty"`
+	// SigningKeys is a list of references to secrets that contain the signing keys
+	SigningKeys []corev1.SecretReference `json:"signing_keys,omitempty"`
 }
 
 type NatsOperatorStatus struct {
