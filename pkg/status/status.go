@@ -37,6 +37,11 @@ func SetNatzOperatorCondition(obj *natsv1alpha1.NatsOperator, condition metav1.C
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
 }
 
+// SetNatzSigningKeyCondition ...
+func SetNatzSigningKeyCondition(obj *natsv1alpha1.NatsSigningKey, condition metav1.Condition) {
+	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
+}
+
 // SetNatzUserCondition ...
 func SetNatzUserCondition(obj *natsv1alpha1.NatsUser, condition metav1.Condition) {
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
@@ -50,6 +55,18 @@ func NewOperatorSychronizedCondition(obj *natsv1alpha1.NatsOperator) metav1.Cond
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: metav1.Now(),
 		Message:            fmt.Sprintf("the operator has successfully created: %s", obj.Name),
+		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
+}
+
+// NewSigningKeySychronizedCondition creates the provisioning started condition in cluster conditions.
+func NewSigningKeySychronizedCondition(obj *natsv1alpha1.NatsSigningKey) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeSynchronized,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            fmt.Sprintf("the signing key has successfully created: %s", obj.Name),
 		Reason:             natsv1alpha1.ConditionReasonSynchronized,
 	}
 }

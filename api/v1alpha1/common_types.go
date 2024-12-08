@@ -17,7 +17,8 @@ const (
 )
 
 const (
-	FinalizerName = "natz.zeiss.com/finalizer"
+	FinalizerName   = "natz.zeiss.com/finalizer"
+	OwnerAnnotation = "natz.zeiss.com/owner"
 )
 
 // SecretValueFromSource represents the source of a secret value

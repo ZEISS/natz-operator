@@ -23,7 +23,7 @@ type NatsOperatorSpec struct {
 	// PublicKey is the public key that should be used to verify the JWT
 	PublicKey corev1.SecretReference `json:"public_key,omitempty"`
 	// SigningKeys is a list of references to secrets that contain the signing keys
-	SigningKeys []corev1.SecretReference `json:"signing_keys,omitempty"`
+	SigningKeys []NatsSigningKey `json:"signing_keys,omitempty"`
 }
 
 type NatsOperatorStatus struct {
