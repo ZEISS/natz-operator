@@ -6,6 +6,7 @@ resources:
   - bases/natz.zeiss.com_natsaccounts.yaml
   - bases/natz.zeiss.com_natsusers.yaml
   - bases/natz.zeiss.com_natsgateways.yaml
+  - bases/natz.zeiss.com_natssigningkeys.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

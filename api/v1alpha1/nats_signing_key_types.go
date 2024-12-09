@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/nats-io/nkeys"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -14,10 +15,24 @@ const (
 	SigningKeyPhaseFailed       SigningKeyPhase = "Failed"
 )
 
+// SigningKeyType is a type that represents the type of the NKey.
+//
+// +enum
+// +kubebuilder:validation:Enum={Operator,Account,User}
+type SigningKeyType string
+
+// NatsSigningKeyReference is a reference to a NatsSigningKey
+type NatsSigningKeyReference struct {
+	// Name is the name of the NatsSigningKey
+	Name string `json:"name"`
+}
+
 // NatsSigningKeySpec defines the desired state of SigningKey
 type NatsSigningKeySpec struct {
-	// DeleteSecret is a flag that indicates if the secret should be deleted.
-	DeleteSecret bool `json:"deleteSecret,omitempty"`
+	// Type is the type of the NKey.
+	Type SigningKeyType `json:"type"`
+	// PreventDeletion is a flag that indicates if the key should be locked to prevent deletion.
+	PreventDeletion bool `json:"prevent_deletion,omitempty"`
 }
 
 // NatsSigningKeyStatus defines the observed state of SigningKey
@@ -44,6 +59,23 @@ type NatsSigningKey struct {
 
 	Spec   NatsSigningKeySpec   `json:"spec,omitempty"`
 	Status NatsSigningKeyStatus `json:"status,omitempty"`
+}
+
+// Keys returns the keys of the NKey.
+func (sk *NatsSigningKey) Keys() (nkeys.KeyPair, error) {
+	var keys nkeys.KeyPair
+	var err error
+
+	switch sk.Spec.Type {
+	case "Operator":
+		keys, err = nkeys.CreateOperator()
+	case "Account":
+		keys, err = nkeys.CreateAccount()
+	case "User":
+		keys, err = nkeys.CreateUser()
+	}
+
+	return keys, err
 }
 
 //+kubebuilder:object:root=true

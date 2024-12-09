@@ -133,6 +133,11 @@ func setupControllers(mgr ctrl.Manager) error {
 		return err
 	}
 
+	err = controllers.NewNatsSigningKeyReconciler(mgr).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

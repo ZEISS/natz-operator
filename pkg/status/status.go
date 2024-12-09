@@ -94,3 +94,15 @@ func NewUserFailedCondition(obj *natsv1alpha1.NatsUser, err error) metav1.Condit
 		Reason:             natsv1alpha1.ConditionReasonFailed,
 	}
 }
+
+// NewSigningKeyFailedCondition creates the provisioning started condition in cluster conditions.
+func NewSigningKeyFailedCondition(obj *natsv1alpha1.NatsSigningKey, err error) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeFailed,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            err.Error(),
+		Reason:             natsv1alpha1.ConditionReasonFailed,
+	}
+}

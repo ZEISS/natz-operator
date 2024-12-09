@@ -1,5 +1,15 @@
 apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsSigningKey
+metadata:
+  name: natsoperator-sample
+spec:
+  prevent_deletion: true
+  type: Operator
+---
+apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsOperator
 metadata:
   name: natsoperator-sample
 spec:
+  signing_keys:
+    - name: natsoperator-sample
