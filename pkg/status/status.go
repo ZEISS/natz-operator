@@ -32,6 +32,11 @@ func SetCondition(condition metav1.Condition, conditions ...metav1.Condition) []
 	)
 }
 
+// SetNatzPrivateKeyCondition ...
+func SetNatzPrivateKeyCondition(obj *natsv1alpha1.NatsPrivateKey, condition metav1.Condition) {
+	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
+}
+
 // SetNatzOperatorCondition ...
 func SetNatzOperatorCondition(obj *natsv1alpha1.NatsOperator, condition metav1.Condition) {
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
@@ -45,6 +50,18 @@ func SetNatzSigningKeyCondition(obj *natsv1alpha1.NatsSigningKey, condition meta
 // SetNatzUserCondition ...
 func SetNatzUserCondition(obj *natsv1alpha1.NatsUser, condition metav1.Condition) {
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
+}
+
+// NewPrivateKeySychronizedCondition creates the provisioning started condition in cluster conditions.
+func NewPrivateKeySychronizedCondition(obj *natsv1alpha1.NatsPrivateKey) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeSynchronized,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            fmt.Sprintf("the private key has successfully created: %s", obj.Name),
+		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
 }
 
 // NewOperatorSychronizedCondition creates the provisioning started condition in cluster conditions.
@@ -97,6 +114,18 @@ func NewUserFailedCondition(obj *natsv1alpha1.NatsUser, err error) metav1.Condit
 
 // NewSigningKeyFailedCondition creates the provisioning started condition in cluster conditions.
 func NewSigningKeyFailedCondition(obj *natsv1alpha1.NatsSigningKey, err error) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeFailed,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            err.Error(),
+		Reason:             natsv1alpha1.ConditionReasonFailed,
+	}
+}
+
+// NewPrivateKeyFailedCondition creates the provisioning started condition in cluster conditions.
+func NewPrivateKeyFailedCondition(obj *natsv1alpha1.NatsPrivateKey, err error) metav1.Condition {
 	return metav1.Condition{
 		Type:               natsv1alpha1.ConditionTypeFailed,
 		ObservedGeneration: obj.Generation,
