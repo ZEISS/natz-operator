@@ -15,8 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/nats-io/nkeys"
-	"github.com/zeiss/natz-operator/api/v1alpha1"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
 	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/conv"
@@ -123,26 +121,12 @@ func (r *NatsSigningKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 	secret.Name = sk.Name
 	secret.Type = "natz.zeiss.com/nats-signing-key"
 	secret.Annotations = map[string]string{
-		v1alpha1.OwnerAnnotation: fmt.Sprintf("%s/%s", secret.Namespace, secret.Name),
+		natsv1alpha1.OwnerAnnotation: fmt.Sprintf("%s/%s", secret.Namespace, secret.Name),
 	}
 
-	var keys nkeys.KeyPair
-	switch sk.Spec.Type {
-	case "Operator":
-		keys, err = nkeys.CreateOperator()
-		if err != nil {
-			return err
-		}
-	case "Account":
-		keys, err = nkeys.CreateAccount()
-		if err != nil {
-			return err
-		}
-	case "User":
-		keys, err = nkeys.CreateUser()
-		if err != nil {
-			return err
-		}
+	keys, err := sk.Keys()
+	if err != nil {
+		return err
 	}
 
 	seed, err := keys.Seed()
@@ -177,6 +161,29 @@ func (r *NatsSigningKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 }
 
 func (r *NatsSigningKeyReconciler) reconcileDelete(ctx context.Context, sk *natsv1alpha1.NatsSigningKey) (ctrl.Result, error) {
+	// Get the associated secret
+	secret := &corev1.Secret{}
+	secretName := client.ObjectKey{
+		Namespace: sk.Namespace,
+		Name:      sk.Name,
+	}
+
+	if err := r.Get(ctx, secretName, secret); utilx.NotEmpty(client.IgnoreNotFound(err)) {
+		return ctrl.Result{}, err
+	}
+
+	if sk.Spec.PreventDeletion && secret.ObjectMeta.DeletionTimestamp.IsZero() {
+		if controllerutil.HasControllerReference(secret) {
+			if err := controllerutil.RemoveControllerReference(sk, secret, r.Scheme); err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
+
+			if err := r.Update(ctx, secret); err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
+	}
+
 	// Remove our finalizer from the list.
 	controllerutil.RemoveFinalizer(sk, natsv1alpha1.FinalizerName)
 

@@ -3,7 +3,7 @@ kind: NatsSigningKey
 metadata:
   name: natsoperator-sample
 spec:
-  prevent_deletion: true
+  prevent_deletion: false
   type: Operator
 ---
 apiVersion: natz.zeiss.com/v1alpha1
