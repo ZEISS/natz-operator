@@ -60,7 +60,7 @@ type NatsAccountSpec struct {
 	// SigningKeys is a list of references to secrets that contain the signing keys
 	SigningKeys []NatsSigningKeyReference `json:"signingKeys,omitempty"`
 	// OperatorSigningKey is the reference to the operator signing key
-	OperatorSigningKey NatsSigningKeyReference `json:"operatorRef,omitempty"`
+	OperatorSigningKey NatsSigningKeyReference `json:"operatorSigningKey,omitempty"`
 	// Namespaces that are allowed for user creation.
 	// If a NatsUser is referencing this account outside of these namespaces, the operator will create an event for it saying that it's not allowed.
 	AllowUserNamespaces []string `json:"allowedUserNamespaces,omitempty"`

@@ -24,7 +24,6 @@ import (
 	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -99,10 +98,10 @@ func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operato
 		return err
 	}
 
-	err = r.reconcileSystemAccount(ctx, operator)
-	if err != nil {
-		return err
-	}
+	// err = r.reconcileSystemAccount(ctx, operator)
+	// if err != nil {
+	// 	return err
+	// }
 
 	err = r.reconcileServerConfig(ctx, operator)
 	if err != nil {
@@ -112,94 +111,94 @@ func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operato
 	return err
 }
 
-func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	systemAccount := &natsv1alpha1.NatsAccount{}
-	systemAccountName := client.ObjectKey{
-		Namespace: operator.Namespace,
-		Name:      fmt.Sprintf("%v-system", operator.Name),
-	}
+// func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
+// 	systemAccount := &natsv1alpha1.NatsAccount{}
+// 	systemAccountName := client.ObjectKey{
+// 		Namespace: operator.Namespace,
+// 		Name:      fmt.Sprintf("%v-system", operator.Name),
+// 	}
 
-	if err := r.Get(ctx, systemAccountName, systemAccount); !errors.IsNotFound(err) {
-		return err
-	}
+// 	if err := r.Get(ctx, systemAccountName, systemAccount); !errors.IsNotFound(err) {
+// 		return err
+// 	}
 
-	systemAccount.Name = systemAccountName.Name
-	systemAccount.Namespace = systemAccountName.Namespace
+// 	systemAccount.Name = systemAccountName.Name
+// 	systemAccount.Namespace = systemAccountName.Namespace
 
-	pk := &natsv1alpha1.NatsPrivateKey{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%v-system-private-key", operator.Name),
-			Namespace: operator.Namespace,
-		},
-		Spec: natsv1alpha1.NatsPrivateKeySpec{
-			Type: "Account",
-		},
-	}
+// 	pk := &natsv1alpha1.NatsPrivateKey{
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name:      fmt.Sprintf("%v-system-private-key", operator.Name),
+// 			Namespace: operator.Namespace,
+// 		},
+// 		Spec: natsv1alpha1.NatsPrivateKeySpec{
+// 			Type: "Account",
+// 		},
+// 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, pk, func() error {
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+// 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, pk, func() error {
+// 		return nil
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, systemAccount, func() error {
-		systemAccount.Spec = natsv1alpha1.NatsAccountSpec{
-			PrivateKey: natsv1alpha1.NatsPrivateKeyReference{
-				Name: pk.ObjectMeta.Name,
-			},
-			OperatorSigningKey: natsv1alpha1.NatsSigningKeyReference{
-				Name: operator.Spec.SigningKeys[0].Name,
-			},
-			AllowUserNamespaces: []string{
-				operator.Namespace,
-			},
-			Exports: []natsv1alpha1.Export{
-				{
-					Name:                 "account-monitoring-services",
-					Subject:              "$SYS.REQ.ACCOUNT.*.*",
-					Type:                 natsv1alpha1.Service,
-					ResponseType:         jwt.ResponseTypeStream,
-					AccountTokenPosition: 4,
-					Info: jwt.Info{
-						Description: `Request account specific monitoring services for: SUBSZ, CONNZ, LEAFZ, JSZ and INFO`,
-						InfoURL:     "https://docs.nats.io/nats-server/configuration/sys_accounts",
-					},
-				},
-				{
-					Name:                 "account-monitoring-streams",
-					Subject:              "$SYS.ACCOUNT.*.>",
-					Type:                 natsv1alpha1.Stream,
-					AccountTokenPosition: 3,
-					Info: jwt.Info{
-						Description: `Account specific monitoring stream`,
-						InfoURL:     "https://docs.nats.io/nats-server/configuration/sys_accounts",
-					},
-				},
-			},
-			Limits: natsv1alpha1.OperatorLimits{
-				NatsLimits: jwt.NatsLimits{
-					Subs:    -1,
-					Payload: -1,
-					Data:    -1,
-				},
-				AccountLimits: jwt.AccountLimits{
-					Conn:            -1,
-					Exports:         -1,
-					WildcardExports: true,
-					DisallowBearer:  true,
-				},
-			},
-		}
+// 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, systemAccount, func() error {
+// 		systemAccount.Spec = natsv1alpha1.NatsAccountSpec{
+// 			PrivateKey: natsv1alpha1.NatsPrivateKeyReference{
+// 				Name: pk.ObjectMeta.Name,
+// 			},
+// 			OperatorSigningKey: natsv1alpha1.NatsSigningKeyReference{
+// 				Name: operator.Spec.SigningKeys[0].Name,
+// 			},
+// 			AllowUserNamespaces: []string{
+// 				operator.Namespace,
+// 			},
+// 			Exports: []natsv1alpha1.Export{
+// 				{
+// 					Name:                 "account-monitoring-services",
+// 					Subject:              "$SYS.REQ.ACCOUNT.*.*",
+// 					Type:                 natsv1alpha1.Service,
+// 					ResponseType:         jwt.ResponseTypeStream,
+// 					AccountTokenPosition: 4,
+// 					Info: jwt.Info{
+// 						Description: `Request account specific monitoring services for: SUBSZ, CONNZ, LEAFZ, JSZ and INFO`,
+// 						InfoURL:     "https://docs.nats.io/nats-server/configuration/sys_accounts",
+// 					},
+// 				},
+// 				{
+// 					Name:                 "account-monitoring-streams",
+// 					Subject:              "$SYS.ACCOUNT.*.>",
+// 					Type:                 natsv1alpha1.Stream,
+// 					AccountTokenPosition: 3,
+// 					Info: jwt.Info{
+// 						Description: `Account specific monitoring stream`,
+// 						InfoURL:     "https://docs.nats.io/nats-server/configuration/sys_accounts",
+// 					},
+// 				},
+// 			},
+// 			Limits: natsv1alpha1.OperatorLimits{
+// 				NatsLimits: jwt.NatsLimits{
+// 					Subs:    -1,
+// 					Payload: -1,
+// 					Data:    -1,
+// 				},
+// 				AccountLimits: jwt.AccountLimits{
+// 					Conn:            -1,
+// 					Exports:         -1,
+// 					WildcardExports: true,
+// 					DisallowBearer:  true,
+// 				},
+// 			},
+// 		}
 
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+// 		return nil
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, obj *natsv1alpha1.NatsOperator) error {
 	pk := &corev1.Secret{}

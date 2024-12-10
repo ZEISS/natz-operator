@@ -236,7 +236,7 @@ spec:
                   wildcards:
                     type: boolean
                 type: object
-              operatorRef:
+              operatorSigningKey:
                 description: OperatorSigningKey is the reference to the operator signing
                   key
                 properties:
