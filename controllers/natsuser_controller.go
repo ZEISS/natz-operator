@@ -85,7 +85,7 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return reconcile.Result{}, err
 	}
 
-	return r.reconcileResources(ctx, req, user)
+	return r.reconcileResources(ctx, user)
 }
 
 func (r *NatsUserReconciler) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsUser) (ctrl.Result, error) {
@@ -103,19 +103,20 @@ func (r *NatsUserReconciler) reconcileDelete(ctx context.Context, obj *natsv1alp
 	return ctrl.Result{Requeue: true}, nil
 }
 
-func (r *NatsUserReconciler) reconcileResources(ctx context.Context, req ctrl.Request, user *natsv1alpha1.NatsUser) (ctrl.Result, error) {
+func (r *NatsUserReconciler) reconcileResources(ctx context.Context, user *natsv1alpha1.NatsUser) (ctrl.Result, error) {
 	if err := r.reconcileStatus(ctx, user); err != nil {
 		return r.ManageError(ctx, user, err)
 	}
 
-	if err := r.reconcileUser(ctx, req, user); err != nil {
+	if err := r.reconcileUser(ctx, user); err != nil {
 		return r.ManageError(ctx, user, err)
 	}
 
 	return r.ManageSuccess(ctx, user)
 }
 
-func (r *NatsUserReconciler) reconcileUser(ctx context.Context, req ctrl.Request, user *natsv1alpha1.NatsUser) error {
+// nolint:gocyclo
+func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alpha1.NatsUser) error {
 	sk := &natsv1alpha1.NatsSigningKey{}
 	skName := client.ObjectKey{
 		Namespace: user.Namespace,
