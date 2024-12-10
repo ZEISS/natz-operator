@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"github.com/nats-io/jwt/v2"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,12 +43,18 @@ func (p *Permission) toNats() jwt.Permission {
 
 // NatsUserSpec defines the desired state of NatsUser
 type NatsUserSpec struct {
-	// AccountRef is the reference to the account that should sign this user
-	AccountRef             corev1.ObjectReference `json:"accountRef"`
-	Permissions            Permissions            `json:"permissions,omitempty"`
-	Limits                 Limits                 `json:"limits,omitempty"`
-	BearerToken            bool                   `json:"bearer_token,omitempty"`
-	AllowedConnectionTypes jwt.StringList         `json:"allowed_connection_types,omitempty"`
+	// PrivateKey is a reference to a secret that contains the private key
+	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`
+	// AccountSigningKey is a reference to a secret that contains the account signing key
+	AccountSigningKey NatsSigningKeyReference `json:"accountSigningKey,omitempty"`
+	// Permissions define the permissions for the user
+	Permissions Permissions `json:"permissions,omitempty"`
+	// Limits define the limits for the user
+	Limits Limits `json:"limits,omitempty"`
+	// BearerToken is a flag that indicates if the user should be created with a bearer token
+	BearerToken bool `json:"bearer_token,omitempty"`
+	// AllowedConnectionTypes is a list of allowed connection types
+	AllowedConnectionTypes jwt.StringList `json:"allowed_connection_types,omitempty"`
 }
 
 type UserLimits struct {

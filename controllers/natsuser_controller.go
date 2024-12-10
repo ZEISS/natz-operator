@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 
@@ -113,49 +112,90 @@ func (r *NatsUserReconciler) reconcileResources(ctx context.Context, req ctrl.Re
 		return r.ManageError(ctx, user, err)
 	}
 
-	if err := r.reconcileSecret(ctx, user); err != nil {
-		return r.ManageError(ctx, user, err)
-	}
-
 	return r.ManageSuccess(ctx, user)
 }
 
 func (r *NatsUserReconciler) reconcileUser(ctx context.Context, req ctrl.Request, user *natsv1alpha1.NatsUser) error {
-	log := log.FromContext(ctx)
-
-	issuer := &natsv1alpha1.NatsAccount{}
-	issuerName := client.ObjectKey{
-		Namespace: utilx.IfElse(utilx.Empty(user.Spec.AccountRef.Namespace), req.Namespace, user.Spec.AccountRef.Namespace),
-		Name:      user.Spec.AccountRef.Name,
+	sk := &natsv1alpha1.NatsSigningKey{}
+	skName := client.ObjectKey{
+		Namespace: user.Namespace,
+		Name:      user.Spec.AccountSigningKey.Name,
 	}
 
-	if err := r.Get(ctx, issuerName, issuer); errors.IsNotFound(err) {
+	if err := r.Get(ctx, skName, sk); errors.IsNotFound(err) {
 		return err
 	}
 
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, user, func() error {
-		controllerutil.AddFinalizer(user, natsv1alpha1.FinalizerName)
+	skSecret := &corev1.Secret{}
+	skSecretName := client.ObjectKey{
+		Namespace: sk.Namespace,
+		Name:      sk.Name,
+	}
 
-		return nil
-	})
+	if err := r.Get(ctx, skSecretName, skSecret); err != nil {
+		return err
+	}
+
+	pk := &natsv1alpha1.NatsPrivateKey{}
+	pkName := client.ObjectKey{
+		Namespace: user.Namespace,
+		Name:      user.Spec.PrivateKey.Name,
+	}
+
+	if err := r.Get(ctx, pkName, pk); err != nil {
+		return err
+	}
+
+	pkSecret := &corev1.Secret{}
+	pkSecretName := client.ObjectKey{
+		Namespace: pk.Namespace,
+		Name:      pk.Name,
+	}
+
+	if err := r.Get(ctx, pkSecretName, pkSecret); errors.IsNotFound(err) {
+		return err
+	}
+
+	pkSigner, err := nkeys.FromSeed(pkSecret.Data[OPERATOR_SEED_KEY])
 	if err != nil {
 		return err
 	}
 
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		log.Info("user created or updated", "operation", op)
+	public, err := pkSigner.PublicKey()
+	if err != nil {
+		return err
+	}
+
+	signerKp, err := nkeys.FromSeed(skSecret.Data[OPERATOR_SEED_KEY])
+	if err != nil {
+		return err
+	}
+
+	token := jwt.NewUserClaims(public)
+	token.User = user.Spec.ToNatsJWT()
+
+	jwt, err := token.Encode(signerKp)
+	if err != nil {
+		return err
+	}
+	user.Status.JWT = jwt
+
+	if !controllerutil.ContainsFinalizer(user, natsv1alpha1.FinalizerName) {
+		controllerutil.AddFinalizer(user, natsv1alpha1.FinalizerName)
+	}
+
+	if !controllerutil.HasControllerReference(user) {
+		if err := controllerutil.SetControllerReference(user, pk, r.Scheme); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func (r *NatsUserReconciler) reconcileStatus(ctx context.Context, user *natsv1alpha1.NatsUser) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile status", "name", user.Name, "namespace", user.Namespace)
-
 	phase := utilx.IfElse(
-		utilx.Empty(user.Status.UserSecretName) && utilx.Empty(user.Status.PublicKey) && utilx.Empty(user.Status.JWT),
+		utilx.Empty(user.Status.PublicKey) && utilx.Empty(user.Status.JWT),
 		natsv1alpha1.UserPhasePending,
 		natsv1alpha1.UserPhaseSynchronized,
 	)
@@ -164,107 +204,6 @@ func (r *NatsUserReconciler) reconcileStatus(ctx context.Context, user *natsv1al
 		user.Status.Phase = phase
 
 		return r.Status().Update(ctx, user)
-	}
-
-	return nil
-}
-
-// nolint:gocyclo
-func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, user *natsv1alpha1.NatsUser) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile secret", "name", user.Name, "namespace", user.Namespace)
-
-	issuer := &natsv1alpha1.NatsAccount{}
-	issuerName := client.ObjectKey{
-		Namespace: utilx.IfElse(utilx.Empty(user.Spec.AccountRef.Namespace), user.Namespace, user.Spec.AccountRef.Namespace),
-		Name:      user.Spec.AccountRef.Name,
-	}
-
-	if err := r.Get(ctx, issuerName, issuer); errors.IsNotFound(err) {
-		return err
-	}
-
-	signerSecret := &corev1.Secret{}
-	signerSecretName := client.ObjectKey{
-		Namespace: issuer.Namespace,
-	}
-
-	if err := r.Get(ctx, signerSecretName, signerSecret); errors.IsNotFound(err) {
-		return err
-	}
-
-	secret := &corev1.Secret{}
-	secretName := client.ObjectKey{
-		Namespace: user.Namespace,
-		Name:      user.Name,
-	}
-
-	err := r.Get(ctx, secretName, secret)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-
-	if !errors.IsNotFound(err) {
-		user.Status.JWT = string(secret.Data[OPERATOR_JWT])
-		user.Status.PublicKey = string(secret.Data[OPERATOR_PUBLIC_KEY])
-		user.Status.UserSecretName = secret.Name
-
-		return r.Status().Update(ctx, user)
-	}
-
-	keys, err := nkeys.CreateUser()
-	if err != nil {
-		return err
-	}
-
-	seed, err := keys.Seed()
-	if err != nil {
-		return err
-	}
-
-	public, err := keys.PublicKey()
-	if err != nil {
-		return err
-	}
-
-	token := jwt.NewUserClaims(public)
-	token.User = user.Spec.ToNatsJWT()
-
-	signerKp, err := nkeys.FromSeed(signerSecret.Data[OPERATOR_SEED_KEY])
-	if err != nil {
-		return err
-	}
-
-	data := map[string][]byte{}
-	data[OPERATOR_SEED_KEY] = seed
-	data[OPERATOR_PUBLIC_KEY] = []byte(public)
-
-	jwt, err := token.Encode(signerKp)
-	if err != nil {
-		return err
-	}
-	data[OPERATOR_JWT] = []byte(jwt)
-	data[USER_CREDS] = []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, jwt, seed))
-
-	secret.Namespace = user.Namespace
-	secret.Name = secretName.Name
-	secret.Type = "natz.zeiss.com/nats-user"
-
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
-		secret.Data = data
-
-		return controllerutil.SetControllerReference(user, secret, r.Scheme)
-	})
-	if err != nil {
-		r.Recorder.Event(user, corev1.EventTypeWarning, conv.String(EventReasonOperatorSecretCreateFailed), "secret creation failed")
-		return err
-	}
-
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		r.Recorder.Event(user, corev1.EventTypeNormal, conv.String(EventReasonUserSecretCreateSucceeded), "secret created or updated")
-
-		log.Info("secret created or updated", "operation", op)
 	}
 
 	return nil
@@ -282,6 +221,10 @@ func (r *NatsUserReconciler) IsSynchronized(obj *natsv1alpha1.NatsUser) bool {
 
 // ManageError ...
 func (r *NatsUserReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsUser, err error) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	logger.Error(err, "reconciliation failed", "user", obj)
+
 	status.SetNatzUserCondition(obj, status.NewUserFailedCondition(obj, err))
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
