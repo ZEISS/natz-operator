@@ -1,0 +1,23 @@
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsPrivateKey
+metadata:
+  name: natsaccount-system-private-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsSigningKey
+metadata:
+  name: atsaccount-system-signing-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsAccount
+metadata:
+  name: natsaccount-system
+spec:
+  privateKey:
+    name: natsaccount-system-private-key
+  signingKeys:
+    - name: atsaccount-system-signing-key

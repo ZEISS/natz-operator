@@ -20,16 +20,16 @@ const (
 
 type NatsOperatorSpec struct {
 	// PrivateKey is a reference to a secret that contains the private key
-	PrivateKey NatsPrivateKeyReference `json:"private_key,omitempty"`
+	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`
 	// SigningKeys is a list of references to secrets that contain the signing keys
-	SigningKeys []NatsSigningKeyReference `json:"signing_keys,omitempty"`
+	SigningKeys []NatsSigningKeyReference `json:"signingKeys,omitempty"`
 }
 
 type NatsOperatorStatus struct {
-	JWT        string `json:"jwt"`
-	PublicKey  string `json:"publicKey"`
-	SecretName string `json:"secretName"`
-
+	// JWT is the JWT that the operator is currently using.
+	JWT string `json:"jwt"`
+	// PublicKey is the public key that the operator is currently using.
+	PublicKey string `json:"publicKey"`
 	// Conditions is an array of conditions that the operator is currently in.
 	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
 	// Phase is the current phase of the operator.

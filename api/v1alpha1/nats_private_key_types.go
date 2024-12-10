@@ -25,6 +25,8 @@ type PrivateKeyType string
 type NatsPrivateKeyReference struct {
 	// Name is the name of the private key
 	Name string `json:"name"`
+	// Namespace is the namespace of the private key
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // NatsPrivateKeySpec defines the desired state of private key

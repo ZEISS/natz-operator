@@ -42,6 +42,11 @@ func SetNatzOperatorCondition(obj *natsv1alpha1.NatsOperator, condition metav1.C
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
 }
 
+// SetNatzAccountCondition ...
+func SetNatzAccountCondition(obj *natsv1alpha1.NatsAccount, condition metav1.Condition) {
+	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
+}
+
 // SetNatzSigningKeyCondition ...
 func SetNatzSigningKeyCondition(obj *natsv1alpha1.NatsSigningKey, condition metav1.Condition) {
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
@@ -73,6 +78,42 @@ func NewOperatorSychronizedCondition(obj *natsv1alpha1.NatsOperator) metav1.Cond
 		LastTransitionTime: metav1.Now(),
 		Message:            fmt.Sprintf("the operator has successfully created: %s", obj.Name),
 		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
+}
+
+// NewOperatorFailedCondition creates the provisioning started condition in cluster conditions.
+func NewOperatorFailedCondition(obj *natsv1alpha1.NatsOperator, err error) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeFailed,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            err.Error(),
+		Reason:             natsv1alpha1.ConditionReasonFailed,
+	}
+}
+
+// NewAccountSychronizedCondition creates the provisioning started condition in cluster conditions.
+func NewAccountSychronizedCondition(obj *natsv1alpha1.NatsAccount) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeSynchronized,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            fmt.Sprintf("the account has successfully created: %s", obj.Name),
+		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
+}
+
+// NewAccountFailedCondition creates the provisioning started condition in cluster conditions.
+func NewAccountFailedCondition(obj *natsv1alpha1.NatsAccount, err error) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeFailed,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            err.Error(),
+		Reason:             natsv1alpha1.ConditionReasonFailed,
 	}
 }
 

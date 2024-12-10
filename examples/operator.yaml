@@ -17,7 +17,7 @@ kind: NatsOperator
 metadata:
   name: natsoperator-sample
 spec:
-  private_key:
+  privateKey:
     name: natsoperator-sample-private-key
-  signing_keys:
+  signingKeys:
     - name: natsoperator-demo-signing-key

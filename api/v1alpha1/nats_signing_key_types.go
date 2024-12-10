@@ -25,6 +25,8 @@ type SigningKeyType string
 type NatsSigningKeyReference struct {
 	// Name is the name of the NatsSigningKey
 	Name string `json:"name"`
+	// Namespace is the namespace of the NatsSigningKey
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // NatsSigningKeySpec defines the desired state of SigningKey

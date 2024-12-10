@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
@@ -22,6 +24,7 @@ import (
 	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -37,6 +40,7 @@ const (
 	EventReasonOperatorSecretCreateSucceeded EventReason = "OperatorSecretCreateSucceeded"
 	EventReasonOperatorSecretCreateFailed    EventReason = "OperatorSecretCreateFailed"
 	EventReasonOperatorSynchronized          EventReason = "OperatorSynchronized"
+	EventReasonOperatorSynchronizeFailed     EventReason = "OperatorSynchronizeFailed"
 )
 
 // NatsOperatorReconciler ...
@@ -77,66 +81,78 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return r.reconcileDelete(ctx, operator)
 	}
 
-	return r.reconcileResources(ctx, operator)
-}
-
-func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operator *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
-	err := r.reconcileStatus(ctx, operator)
+	err := r.reconcileResources(ctx, operator)
 	if err != nil {
-		log.Error(err, "failed to reconcile status", "name", operator.Name, "namespace", operator.Namespace)
-		return ctrl.Result{}, err
-	}
-
-	if err = r.reconcileOperator(ctx, operator); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	err = r.reconcileSystemAccount(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile system account", "name", operator.Name, "namespace", operator.Namespace)
-		return ctrl.Result{}, err
-	}
-
-	res, err := r.reconcileServerConfig(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile server config", "name", operator.Name, "namespace", operator.Namespace)
-		return res, err
+		return r.ManageError(ctx, operator, err)
 	}
 
 	return r.ManageSuccess(ctx, operator)
 }
 
-func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	log := log.FromContext(ctx)
+func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
+	err := r.reconcileStatus(ctx, operator)
+	if err != nil {
+		return err
+	}
 
+	if err = r.reconcileOperator(ctx, operator); err != nil {
+		return err
+	}
+
+	err = r.reconcileSystemAccount(ctx, operator)
+	if err != nil {
+		return err
+	}
+
+	err = r.reconcileServerConfig(ctx, operator)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
 	systemAccount := &natsv1alpha1.NatsAccount{}
 	systemAccountName := client.ObjectKey{
 		Namespace: operator.Namespace,
 		Name:      fmt.Sprintf("%v-system", operator.Name),
 	}
 
-	err := r.Get(ctx, systemAccountName, systemAccount)
-	if err != nil && !errors.IsNotFound(err) {
+	if err := r.Get(ctx, systemAccountName, systemAccount); !errors.IsNotFound(err) {
 		return err
-	}
-
-	if !errors.IsNotFound(err) {
-		return nil
 	}
 
 	systemAccount.Name = systemAccountName.Name
 	systemAccount.Namespace = systemAccountName.Namespace
 
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, systemAccount, func() error {
+	pk := &natsv1alpha1.NatsPrivateKey{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%v-system-private-key", operator.Name),
+			Namespace: operator.Namespace,
+		},
+		Spec: natsv1alpha1.NatsPrivateKeySpec{
+			Type: "Account",
+		},
+	}
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, pk, func() error {
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, systemAccount, func() error {
 		systemAccount.Spec = natsv1alpha1.NatsAccountSpec{
+			PrivateKey: natsv1alpha1.NatsPrivateKeyReference{
+				Name: pk.ObjectMeta.Name,
+			},
+			OperatorSigningKey: natsv1alpha1.NatsSigningKeyReference{
+				Name: operator.Spec.SigningKeys[0].Name,
+			},
 			AllowUserNamespaces: []string{
 				operator.Namespace,
-			},
-			OperatorRef: corev1.ObjectReference{
-				Namespace: operator.Namespace,
-				Name:      operator.Name,
 			},
 			Exports: []natsv1alpha1.Export{
 				{
@@ -182,27 +198,52 @@ func (r *NatsOperatorReconciler) reconcileSystemAccount(ctx context.Context, ope
 		return err
 	}
 
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		log.Info("system account created or updated", "operation", op)
-	}
-
 	return nil
 }
 
 func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, obj *natsv1alpha1.NatsOperator) error {
+	pk := &corev1.Secret{}
+	pkName := client.ObjectKey{
+		Namespace: obj.Namespace,
+		Name:      obj.Spec.PrivateKey.Name,
+	}
+
+	if err := r.Get(ctx, pkName, pk); err != nil {
+		return err
+	}
+
+	seed, ok := pk.Data[OPERATOR_SEED_KEY]
+	if !ok {
+		return fmt.Errorf("public key not found")
+	}
+
+	sk, err := nkeys.FromSeed(seed)
+	if err != nil {
+		return err
+	}
+
+	public, err := sk.PublicKey()
+	if err != nil {
+		return err
+	}
+
+	token := jwt.NewOperatorClaims(public)
+	jwt, err := token.Encode(sk)
+	if err != nil {
+		return err
+	}
+
+	obj.Status.JWT = jwt
+	obj.Status.PublicKey = public
+
 	if !controllerutil.ContainsFinalizer(obj, natsv1alpha1.FinalizerName) {
 		controllerutil.AddFinalizer(obj, natsv1alpha1.FinalizerName)
-		return r.Update(ctx, obj)
 	}
 
 	return nil
 }
 
-func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, operator *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile server config", "name", operator.Name, "namespace", operator.Namespace)
-
+func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
 	serverConfig := &corev1.Secret{}
 	serverConfigName := client.ObjectKey{
 		Namespace: operator.Namespace,
@@ -211,11 +252,11 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 
 	err := r.Get(ctx, serverConfigName, serverConfig)
 	if err != nil && !errors.IsNotFound(err) {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	if !errors.IsNotFound(err) {
-		return ctrl.Result{}, nil
+		return nil
 	}
 
 	systemAccount := &natsv1alpha1.NatsAccount{}
@@ -226,21 +267,14 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 
 	err = r.Get(ctx, systemAccountName, systemAccount)
 	if err != nil && !errors.IsNotFound(err) {
-		return ctrl.Result{}, err
-	}
-
-	if systemAccount.Status.Phase != natsv1alpha1.AccountPhaseSynchronized {
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: time.Second * 1,
-		}, nil
+		return err
 	}
 
 	serverConfig.Namespace = operator.Namespace
 	serverConfig.Name = serverConfigName.Name
 	serverConfig.Type = "natz.zeiss.com/nats-configuration"
 
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, serverConfig, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, serverConfig, func() error {
 		template := fmt.Sprintf(AUTH_CONFIG_TEMPLATE, operator.Status.JWT, systemAccount.Status.PublicKey, systemAccount.Status.PublicKey, systemAccount.Status.JWT)
 		serverConfig.Data = map[string][]byte{
 			OPERATOR_CONFIG_FILE: []byte(template),
@@ -249,14 +283,10 @@ func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, oper
 		return controllerutil.SetControllerReference(operator, serverConfig, r.Scheme)
 	})
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		log.Info("system account created or updated", "operation", op)
-	}
-
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func (r *NatsOperatorReconciler) reconcileStatus(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
@@ -265,7 +295,7 @@ func (r *NatsOperatorReconciler) reconcileStatus(ctx context.Context, operator *
 	log.Info("reconcile status", "name", operator.Name, "namespace", operator.Namespace)
 
 	phase := utilx.IfElse(
-		utilx.Empty(operator.Status.SecretName) && utilx.Empty(operator.Status.PublicKey) && utilx.Empty(operator.Status.JWT),
+		utilx.Empty(operator.Status.PublicKey) && utilx.Empty(operator.Status.JWT),
 		natsv1alpha1.OperatorPhasePending,
 		natsv1alpha1.OperatorPhaseSynchronized,
 	)
@@ -294,86 +324,6 @@ func (r *NatsOperatorReconciler) reconcileDelete(ctx context.Context, operator *
 	return ctrl.Result{Requeue: true}, nil
 }
 
-// nolint:gocyclo
-func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile secret", "name", operator.Name, "namespace", operator.Namespace)
-
-	secret := &corev1.Secret{}
-	secretName := client.ObjectKey{
-		Namespace: operator.Namespace,
-		Name:      fmt.Sprintf("%v-secret", operator.Name),
-	}
-
-	err := r.Get(ctx, secretName, secret)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-
-	if !errors.IsNotFound(err) {
-		return nil
-	}
-
-	keys, err := nkeys.CreateOperator()
-	if err != nil {
-		return err
-	}
-
-	seed, err := keys.Seed()
-	if err != nil {
-		return err
-	}
-
-	public, err := keys.PublicKey()
-	if err != nil {
-		return err
-	}
-
-	token := jwt.NewOperatorClaims(public)
-	// token.Operator.SigningKeys = operator.Spec.SigningKeys
-
-	data := map[string][]byte{}
-	data[OPERATOR_SEED_KEY] = seed
-	data[OPERATOR_PUBLIC_KEY] = []byte(public)
-
-	jwt, err := token.Encode(keys)
-	if err != nil {
-		return err
-	}
-	data[OPERATOR_JWT] = []byte(jwt)
-
-	secret.Namespace = operator.Namespace
-	secret.Name = secretName.Name
-	secret.Type = "natz.zeiss.com/nats-operator"
-
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
-		secret.Data = data
-
-		return controllerutil.SetControllerReference(operator, secret, r.Scheme)
-	})
-	if err != nil {
-		r.Recorder.Event(operator, corev1.EventTypeWarning, conv.String(EventReasonOperatorSecretCreateFailed), "secret creation failed")
-		return err
-	}
-
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		r.Recorder.Event(operator, corev1.EventTypeNormal, conv.String(EventReasonOperatorSecretCreateSucceeded), "secret created or updated")
-
-		log.Info("secret created or updated", "operation", op)
-	}
-
-	operator.Status.SecretName = secret.Name
-	operator.Status.PublicKey = string(secret.Data[OPERATOR_PUBLIC_KEY])
-	operator.Status.JWT = string(secret.Data[OPERATOR_JWT])
-
-	if err := r.Status().Update(ctx, operator); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // IsCreating ...
 func (r *NatsOperatorReconciler) IsCreating(obj *natsv1alpha1.NatsOperator) bool {
 	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
@@ -382,6 +332,24 @@ func (r *NatsOperatorReconciler) IsCreating(obj *natsv1alpha1.NatsOperator) bool
 // IsSynchronized ...
 func (r *NatsOperatorReconciler) IsSynchronized(obj *natsv1alpha1.NatsOperator) bool {
 	return obj.Status.Phase == natsv1alpha1.OperatorPhaseSynchronized
+}
+
+// ManageError ...
+func (r *NatsOperatorReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsOperator, err error) (ctrl.Result, error) {
+	status.SetNatzOperatorCondition(obj, status.NewOperatorFailedCondition(obj, err))
+
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
+	}
+
+	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonOperatorSynchronizeFailed), "operator synchronization failed")
+
+	var retryInterval time.Duration
+
+	return reconcile.Result{
+		RequeueAfter: time.Duration(math.Min(float64(retryInterval.Nanoseconds()*2), float64(time.Hour.Nanoseconds()*6))),
+		Requeue:      true,
+	}, nil
 }
 
 // ManageSuccess ...
@@ -412,21 +380,6 @@ func (r *NatsOperatorReconciler) ManageSuccess(ctx context.Context, obj *natsv1a
 
 	return ctrl.Result{}, nil
 }
-
-// func (r *NatsOperatorReconciler) waitForSecretSync(obj *corev1.Secret) wait.ConditionWithContextFunc {
-// 	return func(ctx context.Context) (bool, error) {
-// 		newObj := &corev1.Secret{}
-// 		if err := r.Get(ctx, client.ObjectKeyFromObject(obj), newObj); err != nil {
-// 			if errors.IsNotFound(err) {
-// 				return true, nil
-// 			}
-
-// 			return false, err
-// 		}
-
-// 		return equality.Semantic.DeepEqual(obj.Data, newObj.Data), nil
-// 	}
-// }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *NatsOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {

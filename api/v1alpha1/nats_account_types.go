@@ -5,7 +5,6 @@ import (
 
 	"github.com/nats-io/jwt/v2"
 	"github.com/samber/lo"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -56,8 +55,12 @@ type OperatorLimits struct {
 
 // NatsAccountSpec defines the desired state of NatsAccount
 type NatsAccountSpec struct {
-	// OperatorRef contains the NATS operator that should issue this account.
-	OperatorRef corev1.ObjectReference `json:"operatorRef,omitempty"`
+	// PrivateKey is a reference to a secret that contains the private key
+	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`
+	// SigningKeys is a list of references to secrets that contain the signing keys
+	SigningKeys []NatsSigningKeyReference `json:"signingKeys,omitempty"`
+	// OperatorSigningKey is the reference to the operator signing key
+	OperatorSigningKey NatsSigningKeyReference `json:"operatorRef,omitempty"`
 	// Namespaces that are allowed for user creation.
 	// If a NatsUser is referencing this account outside of these namespaces, the operator will create an event for it saying that it's not allowed.
 	AllowUserNamespaces []string `json:"allowedUserNamespaces,omitempty"`
@@ -102,13 +105,20 @@ func (s *NatsAccountSpec) ToJWTAccount() jwt.Account {
 
 // NatsAccountStatus defines the observed state of NatsAccount
 type NatsAccountStatus struct {
-	AccountSecretName string `json:"accountSecretName,omitempty"`
-	PublicKey         string `json:"publicKey,omitempty"`
-	JWT               string `json:"jwt,omitempty"`
-	// Phase is the current state of the account
+	// PublicKey is the public key that the account is currently using.
+	PublicKey string `json:"publicKey,omitempty"`
+	// JWT is the JWT that the account is currently using.
+	JWT string `json:"jwt,omitempty"`
+	// Conditions is an array of conditions that the operator is currently in.
+	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
+	// Phase is the current phase of the operator.
+	//
+	// +kubebuilder:validation:Enum={None,Pending,Creating,Synchronized,Failed}
 	Phase AccountPhase `json:"phase"`
-	// ControlerPaused is used to pause the operator for this account
-	ControlerPaused bool `json:"controlerPaused,omitempty"`
+	// ControlPaused is a flag that indicates if the operator is paused.
+	ControlPaused bool `json:"controlPaused,omitempty" optional:"true"`
+	// LastUpdate is the timestamp of the last update.
+	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
 //+kubebuilder:object:root=true

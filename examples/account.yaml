@@ -1,15 +1,29 @@
 apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsPrivateKey
+metadata:
+  name: natsaccount-sample-private-key
+spec:
+  type: Operator
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsSigningKey
+metadata:
+  name: natsaccount-demo-signing-key
+spec:
+  type: Operator
+---
+apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsAccount
 metadata:
   name: knative-eventing-account
 spec:
-  operatorRef:
-    name: natsoperator-sample 
+  operatorSigningKeyRef:
+    name: natsoperator-sample
   allowedUserNamespaces:
-  - knative-eventing
+    - knative-eventing
   imports: []
   exports: []
-  limits: 
+  limits:
     disk_storage: -1
     streams: -1
     conn: -1

@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"context"
+	"math"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -16,15 +18,19 @@ import (
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
+	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/cast"
 	"github.com/zeiss/pkg/conv"
 	"github.com/zeiss/pkg/k8s/finalizers"
+	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 )
 
 const (
-	EventReasonAccountSucceed = "AccountSucceed"
-	EventReasonAccountFailed  = "AccountFailed"
+	EventReasonAccountSucceed           = "AccountSucceed"
+	EventReasonAccountFailed            = "AccountFailed"
+	EventReasonAccountSychronized       = "AccountSychronized"
+	EventReasonAccountSychronizedFailed = "AccountSychronizedFailed"
 )
 
 const (
@@ -55,8 +61,6 @@ func NewNatsAccountReconciler(mgr ctrl.Manager) *NatsAccountReconciler {
 // Reconcile ...
 // nolint:gocyclo
 func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
 	account := &natsv1alpha1.NatsAccount{}
 	if err := r.Get(ctx, req.NamespacedName, account); err != nil {
 		if errors.IsNotFound(err) {
@@ -67,8 +71,6 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if !account.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("processing deletion of account")
-
 		if finalizers.HasFinalizer(account, natsv1alpha1.FinalizerName) {
 			err := r.reconcileDelete(ctx, account)
 			if err != nil {
@@ -82,25 +84,19 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// get latest version of the account
 	if err := r.Get(ctx, req.NamespacedName, account); err != nil {
-		log.Error(err, "account not found", "account", req.NamespacedName)
-
 		return reconcile.Result{}, err
 	}
 
-	err := r.reconcileResources(ctx, req, account)
+	err := r.reconcileResources(ctx, account)
 	if err != nil {
-		r.Recorder.Event(account, corev1.EventTypeWarning, cast.String(EventReasonAccountFailed), "account resources reconciliation failed")
-		return reconcile.Result{}, err
+		r.Recorder.Event(account, corev1.EventTypeWarning, cast.String(EventReasonAccountSychronizedFailed), "account resources reconciliation failed")
+		return r.ManageError(ctx, account, err)
 	}
 
-	return reconcile.Result{}, nil
+	return r.ManageSuccess(ctx, account)
 }
 
 func (r *NatsAccountReconciler) reconcileDelete(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile delete account", "name", account.Name, "namespace", account.Namespace)
-
 	account.SetFinalizers(finalizers.RemoveFinalizer(account, natsv1alpha1.FinalizerName))
 	err := r.Update(ctx, account)
 	if err != nil && !errors.IsNotFound(err) {
@@ -110,65 +106,93 @@ func (r *NatsAccountReconciler) reconcileDelete(ctx context.Context, account *na
 	return nil
 }
 
-func (r *NatsAccountReconciler) reconcileResources(ctx context.Context, req ctrl.Request, account *natsv1alpha1.NatsAccount) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile resources", "name", account.Name, "namespace", account.Namespace)
-
+func (r *NatsAccountReconciler) reconcileResources(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
 	if err := r.reconcileStatus(ctx, account); err != nil {
-		log.Error(err, "failed to reconcile status", "name", account.Name, "namespace", account.Namespace)
 		return err
 	}
 
-	if err := r.reconcileAccount(ctx, req, account); err != nil {
-		log.Error(err, "failed to reconcile account", "name", account.Name, "namespace", account.Namespace)
-		return err
-	}
-
-	if err := r.reconcileSecret(ctx, account); err != nil {
-		log.Error(err, "failed to reconcile secret", "name", account.Name, "namespace", account.Namespace)
+	if err := r.reconcileAccount(ctx, account); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, req ctrl.Request, account *natsv1alpha1.NatsAccount) error {
-	log := log.FromContext(ctx)
-
-	issuer := &natsv1alpha1.NatsOperator{}
-	issuerName := client.ObjectKey{
-		Namespace: utilx.IfElse(utilx.Empty(account.Spec.OperatorRef.Namespace), req.Namespace, account.Spec.OperatorRef.Namespace),
-		Name:      account.Spec.OperatorRef.Name,
+func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
+	sk := &natsv1alpha1.NatsSigningKey{}
+	skName := client.ObjectKey{
+		Namespace: account.Namespace,
+		Name:      account.Spec.OperatorSigningKey.Name,
 	}
 
-	if err := r.Get(ctx, issuerName, issuer); errors.IsNotFound(err) {
+	if err := r.Get(ctx, skName, sk); errors.IsNotFound(err) {
 		return err
 	}
 
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, account, func() error {
-		controllerutil.AddFinalizer(account, natsv1alpha1.FinalizerName)
+	skSecret := &corev1.Secret{}
+	skSecretName := client.ObjectKey{
+		Namespace: sk.Namespace,
+		Name:      sk.Name,
+	}
 
-		return controllerutil.SetControllerReference(issuer, account, r.Scheme)
-	})
+	if err := r.Get(ctx, skSecretName, skSecret); err != nil {
+		return err
+	}
+
+	pk := &natsv1alpha1.NatsPrivateKey{}
+	pkName := client.ObjectKey{
+		Namespace: account.Namespace,
+		Name:      account.Spec.PrivateKey.Name,
+	}
+
+	if err := r.Get(ctx, pkName, pk); err != nil {
+		return err
+	}
+
+	pkSecret := &corev1.Secret{}
+	pkSecretName := client.ObjectKey{
+		Namespace: pk.Namespace,
+		Name:      pk.Name,
+	}
+
+	if err := r.Get(ctx, pkSecretName, pkSecret); errors.IsNotFound(err) {
+		return err
+	}
+
+	pkSigner, err := nkeys.FromSeed(pkSecret.Data[OPERATOR_SEED_KEY])
 	if err != nil {
 		return err
 	}
 
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		log.Info("account created or updated", "operation", op)
+	public, err := pkSigner.PublicKey()
+	if err != nil {
+		return err
+	}
+
+	signerKp, err := nkeys.FromSeed(skSecret.Data[OPERATOR_SEED_KEY])
+	if err != nil {
+		return err
+	}
+
+	token := jwt.NewAccountClaims(public)
+	token.Account = account.Spec.ToJWTAccount()
+
+	jwt, err := token.Encode(signerKp)
+	if err != nil {
+		return err
+	}
+	account.Status.JWT = jwt
+
+	if !controllerutil.ContainsFinalizer(account, natsv1alpha1.FinalizerName) {
+		controllerutil.AddFinalizer(account, natsv1alpha1.FinalizerName)
 	}
 
 	return nil
 }
 
 func (r *NatsAccountReconciler) reconcileStatus(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile status", "name", account.Name, "namespace", account.Namespace)
-
 	phase := utilx.IfElse(
-		utilx.Empty(account.Status.AccountSecretName) && utilx.Empty(account.Status.PublicKey) && utilx.Empty(account.Status.JWT),
+		utilx.Empty(account.Status.PublicKey) && utilx.Empty(account.Status.JWT),
 		natsv1alpha1.AccountPhasePending,
 		natsv1alpha1.AccountPhaseSynchronized,
 	)
@@ -182,104 +206,65 @@ func (r *NatsAccountReconciler) reconcileStatus(ctx context.Context, account *na
 	return nil
 }
 
-// nolint:gocyclo
-func (r *NatsAccountReconciler) reconcileSecret(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
-	log := log.FromContext(ctx)
+// IsCreating ...
+func (r *NatsAccountReconciler) IsCreating(obj *natsv1alpha1.NatsAccount) bool {
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+}
 
-	log.Info("reconcile secret", "name", account.Name, "namespace", account.Namespace)
+// IsSynchronized ...
+func (r *NatsAccountReconciler) IsSynchronized(obj *natsv1alpha1.NatsAccount) bool {
+	return obj.Status.Phase == natsv1alpha1.AccountPhaseSynchronized
+}
 
-	issuer := &natsv1alpha1.NatsOperator{}
-	issuerName := client.ObjectKey{
-		Namespace: account.Namespace,
-		Name:      account.Spec.OperatorRef.Name,
+// ManageError ...
+func (r *NatsAccountReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsAccount, err error) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	logger.Error(err, "reconciling account", "account", obj.Name)
+
+	status.SetNatzAccountCondition(obj, status.NewAccountFailedCondition(obj, err))
+
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
 	}
 
-	if err := r.Get(ctx, issuerName, issuer); errors.IsNotFound(err) {
-		return err
+	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonAccountSychronizedFailed), "account synchronization failed")
+
+	var retryInterval time.Duration
+
+	return reconcile.Result{
+		RequeueAfter: time.Duration(math.Min(float64(retryInterval.Nanoseconds()*2), float64(time.Hour.Nanoseconds()*6))),
+		Requeue:      true,
+	}, nil
+}
+
+// ManageSuccess ...
+func (r *NatsAccountReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
+	if r.IsSynchronized(obj) {
+		return ctrl.Result{}, nil
 	}
 
-	signerSecret := &corev1.Secret{}
-	signerSecretName := client.ObjectKey{
-		Namespace: issuer.Namespace,
-		Name:      issuer.Status.SecretName,
+	status.SetNatzAccountCondition(obj, status.NewAccountSychronizedCondition(obj))
+
+	if r.IsCreating(obj) {
+		return ctrl.Result{Requeue: true}, nil
 	}
 
-	if err := r.Get(ctx, signerSecretName, signerSecret); errors.IsNotFound(err) {
-		return err
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{}, err
 	}
 
-	secret := &corev1.Secret{}
-	secretName := client.ObjectKey{
-		Namespace: account.Namespace,
-		Name:      account.Name,
+	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
+		return ctrl.Result{Requeue: true}, nil
 	}
 
-	err := r.Get(ctx, secretName, secret)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
+	if r.IsCreating(obj) {
+		return ctrl.Result{Requeue: true}, nil
 	}
 
-	if !errors.IsNotFound(err) {
-		account.Status.JWT = string(secret.Data[OPERATOR_JWT])
-		account.Status.PublicKey = string(secret.Data[OPERATOR_PUBLIC_KEY])
-		account.Status.AccountSecretName = secret.Name
+	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonAccountSychronized), "account synchronized")
 
-		return r.Status().Update(ctx, account)
-	}
-
-	keys, err := nkeys.CreateAccount()
-	if err != nil {
-		return err
-	}
-
-	seed, err := keys.Seed()
-	if err != nil {
-		return err
-	}
-
-	public, err := keys.PublicKey()
-	if err != nil {
-		return err
-	}
-
-	token := jwt.NewAccountClaims(public)
-	token.Account = account.Spec.ToJWTAccount()
-
-	signerKp, err := nkeys.FromSeed(signerSecret.Data[OPERATOR_SEED_KEY])
-	if err != nil {
-		return err
-	}
-
-	data := map[string][]byte{}
-	data[OPERATOR_SEED_KEY] = seed
-	data[OPERATOR_PUBLIC_KEY] = []byte(public)
-
-	jwt, err := token.Encode(signerKp)
-	if err != nil {
-		return err
-	}
-	data[OPERATOR_JWT] = []byte(jwt)
-
-	secret.Namespace = account.Namespace
-	secret.Name = secretName.Name
-	secret.Type = "natz.zeiss.com/nats-account"
-
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
-		secret.Data = data
-
-		return controllerutil.SetControllerReference(account, secret, r.Scheme)
-	})
-	if err != nil {
-		r.Recorder.Event(account, corev1.EventTypeWarning, conv.String(EventReasonOperatorSecretCreateFailed), "secret creation failed")
-		return err
-	}
-
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		r.Recorder.Event(account, corev1.EventTypeNormal, conv.String(EventReasonAccountSecretCreateSucceeded), "secret created or updated")
-		log.Info("secret created or updated", "operation", op)
-	}
-
-	return nil
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

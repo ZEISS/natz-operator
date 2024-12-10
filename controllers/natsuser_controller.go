@@ -188,7 +188,6 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, user *natsv1al
 	signerSecret := &corev1.Secret{}
 	signerSecretName := client.ObjectKey{
 		Namespace: issuer.Namespace,
-		Name:      issuer.Status.AccountSecretName,
 	}
 
 	if err := r.Get(ctx, signerSecretName, signerSecret); errors.IsNotFound(err) {

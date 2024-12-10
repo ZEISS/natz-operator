@@ -37,17 +37,20 @@ spec:
             type: object
           spec:
             properties:
-              private_key:
+              privateKey:
                 description: PrivateKey is a reference to a secret that contains the
                   private key
                 properties:
                   name:
                     description: Name is the name of the private key
                     type: string
+                  namespace:
+                    description: Namespace is the namespace of the private key
+                    type: string
                 required:
                 - name
                 type: object
-              signing_keys:
+              signingKeys:
                 description: SigningKeys is a list of references to secrets that contain
                   the signing keys
                 items:
@@ -55,6 +58,9 @@ spec:
                   properties:
                     name:
                       description: Name is the name of the NatsSigningKey
+                      type: string
+                    namespace:
+                      description: Namespace is the namespace of the NatsSigningKey
                       type: string
                   required:
                   - name
@@ -126,6 +132,7 @@ spec:
                   is paused.
                 type: boolean
               jwt:
+                description: JWT is the JWT that the operator is currently using.
                 type: string
               lastUpdate:
                 description: LastUpdate is the timestamp of the last update.
@@ -148,14 +155,13 @@ spec:
                 description: Phase is the current phase of the operator.
                 type: string
               publicKey:
-                type: string
-              secretName:
+                description: PublicKey is the public key that the operator is currently
+                  using.
                 type: string
             required:
             - jwt
             - phase
             - publicKey
-            - secretName
             type: object
         type: object
     served: true
