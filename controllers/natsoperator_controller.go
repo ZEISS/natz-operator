@@ -93,12 +93,6 @@ func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operato
 		return ctrl.Result{}, err
 	}
 
-	err = r.reconcileSecret(ctx, operator)
-	if err != nil {
-		log.Error(err, "failed to reconcile secret", "name", operator.Name, "namespace", operator.Namespace)
-		return ctrl.Result{}, err
-	}
-
 	err = r.reconcileSystemAccount(ctx, operator)
 	if err != nil {
 		log.Error(err, "failed to reconcile system account", "name", operator.Name, "namespace", operator.Namespace)

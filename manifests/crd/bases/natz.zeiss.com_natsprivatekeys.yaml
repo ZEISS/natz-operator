@@ -39,6 +39,10 @@ spec:
           spec:
             description: NatsPrivateKeySpec defines the desired state of private key
             properties:
+              prevent_deletion:
+                description: PreventDeletion is a flag that indicates if the key should
+                  be locked to prevent deletion.
+                type: boolean
               type:
                 description: Type is the type of the NKey.
                 enum:

@@ -1,7 +1,6 @@
 package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,8 +19,8 @@ const (
 )
 
 type NatsOperatorSpec struct {
-	// PublicKey is the public key that should be used to verify the JWT
-	PublicKey corev1.SecretReference `json:"public_key,omitempty"`
+	// PrivateKey is a reference to a secret that contains the private key
+	PrivateKey NatsPrivateKeyReference `json:"private_key,omitempty"`
 	// SigningKeys is a list of references to secrets that contain the signing keys
 	SigningKeys []NatsSigningKeyReference `json:"signing_keys,omitempty"`
 }

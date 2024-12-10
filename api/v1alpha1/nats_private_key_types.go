@@ -31,6 +31,8 @@ type NatsPrivateKeyReference struct {
 type NatsPrivateKeySpec struct {
 	// Type is the type of the NKey.
 	Type PrivateKeyType `json:"type"`
+	// PreventDeletion is a flag that indicates if the key should be locked to prevent deletion.
+	PreventDeletion bool `json:"prevent_deletion,omitempty"`
 }
 
 // NatsPrivateKeyStatus defines the observed state of private key

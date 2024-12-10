@@ -1,15 +1,23 @@
 apiVersion: natz.zeiss.com/v1alpha1
-kind: NatsSigningKey
+kind: NatsPrivateKey
 metadata:
-  name: natsoperator-sample
+  name: natsoperator-sample-private-key
 spec:
   type: Operator
-  prevent_deletion: true
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsSigningKey
+metadata:
+  name: natsoperator-demo-signing-key
+spec:
+  type: Operator
 ---
 apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsOperator
 metadata:
   name: natsoperator-sample
 spec:
+  private_key:
+    name: natsoperator-sample-private-key
   signing_keys:
-    - name: natsoperator-sample
+    - name: natsoperator-demo-signing-key

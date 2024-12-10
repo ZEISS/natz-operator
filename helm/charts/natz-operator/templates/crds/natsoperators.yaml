@@ -37,20 +37,16 @@ spec:
             type: object
           spec:
             properties:
-              public_key:
-                description: PublicKey is the public key that should be used to verify
-                  the JWT
+              private_key:
+                description: PrivateKey is a reference to a secret that contains the
+                  private key
                 properties:
                   name:
-                    description: name is unique within a namespace to reference a
-                      secret resource.
+                    description: Name is the name of the private key
                     type: string
-                  namespace:
-                    description: namespace defines the space within which the secret
-                      name must be unique.
-                    type: string
+                required:
+                - name
                 type: object
-                x-kubernetes-map-type: atomic
               signing_keys:
                 description: SigningKeys is a list of references to secrets that contain
                   the signing keys

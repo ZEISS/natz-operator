@@ -119,7 +119,7 @@ func (r *NatsPrivateKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 
 	secret.Namespace = sk.Namespace
 	secret.Name = sk.Name
-	secret.Type = "natz.zeiss.com/nats-signing-key"
+	secret.Type = natsv1alpha1.SecretPrivateKeyName
 	secret.Annotations = map[string]string{
 		natsv1alpha1.OwnerAnnotation: fmt.Sprintf("%s/%s", secret.Namespace, secret.Name),
 	}
@@ -170,6 +170,18 @@ func (r *NatsPrivateKeyReconciler) reconcileDelete(ctx context.Context, sk *nats
 
 	if err := r.Get(ctx, secretName, secret); utilx.NotEmpty(client.IgnoreNotFound(err)) {
 		return ctrl.Result{}, err
+	}
+
+	if sk.Spec.PreventDeletion && secret.ObjectMeta.DeletionTimestamp.IsZero() {
+		if controllerutil.HasControllerReference(secret) {
+			if err := controllerutil.RemoveControllerReference(sk, secret, r.Scheme); err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
+
+			if err := r.Update(ctx, secret); err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
 	}
 
 	// Remove our finalizer from the list.

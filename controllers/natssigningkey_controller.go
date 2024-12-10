@@ -119,7 +119,7 @@ func (r *NatsSigningKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 
 	secret.Namespace = sk.Namespace
 	secret.Name = sk.Name
-	secret.Type = "natz.zeiss.com/nats-signing-key"
+	secret.Type = natsv1alpha1.SecretSigningKeyName
 	secret.Annotations = map[string]string{
 		natsv1alpha1.OwnerAnnotation: fmt.Sprintf("%s/%s", secret.Namespace, secret.Name),
 	}
