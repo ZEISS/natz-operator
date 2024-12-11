@@ -1,0 +1,5 @@
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsConfig
+metadata:
+  name: nats-default-config
+spec:

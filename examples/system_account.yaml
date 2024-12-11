@@ -22,7 +22,7 @@ spec:
   privateKey:
     name: natsoperator-system-private-key
   signingKeys:
-    - name: natsoperator-system-signing-key+
+    - name: natsoperator-system-signing-key
   exports:
     - name: account-monitoring-services
       subject: $SYS.REQ.ACCOUNT.*.*

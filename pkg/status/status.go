@@ -57,6 +57,35 @@ func SetNatzUserCondition(obj *natsv1alpha1.NatsUser, condition metav1.Condition
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
 }
 
+// SetNatzConfigCondition ...
+func SetNatzConfigCondition(obj *natsv1alpha1.NatsConfig, condition metav1.Condition) {
+	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
+}
+
+// NewNatzConfigSynchronizedCondition creates the provisioning started condition in cluster conditions.
+func NewNatzConfigSynchronizedCondition(obj *natsv1alpha1.NatsConfig) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeSynchronized,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            fmt.Sprintf("the config has successfully created: %s", obj.Name),
+		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
+}
+
+// NewNatzConfigFailedCondition creates the provisioning started condition in cluster conditions.
+func NewNatzConfigFailedCondition(obj *natsv1alpha1.NatsConfig, err error) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeFailed,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            err.Error(),
+		Reason:             natsv1alpha1.ConditionReasonFailed,
+	}
+}
+
 // NewPrivateKeySychronizedCondition creates the provisioning started condition in cluster conditions.
 func NewPrivateKeySychronizedCondition(obj *natsv1alpha1.NatsPrivateKey) metav1.Condition {
 	return metav1.Condition{
