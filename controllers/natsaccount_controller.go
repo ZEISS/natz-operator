@@ -182,6 +182,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 		return err
 	}
 	account.Status.JWT = jwt
+	account.Status.PublicKey = public
 
 	if !controllerutil.ContainsFinalizer(account, natsv1alpha1.FinalizerName) {
 		controllerutil.AddFinalizer(account, natsv1alpha1.FinalizerName)

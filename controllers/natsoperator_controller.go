@@ -12,7 +12,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -66,10 +65,6 @@ func NewNatsOperatorReconciler(mgr ctrl.Manager) *NatsOperatorReconciler {
 // Reconcile ...
 // nolint:gocyclo
 func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile operator", "name", req.Name, "namespace", req.Namespace)
-
 	operator := &natsv1alpha1.NatsOperator{}
 	if err := r.Get(ctx, req.NamespacedName, operator); err != nil {
 		// Request object not found, could have been deleted after reconcile request.

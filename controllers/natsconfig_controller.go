@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -86,33 +87,61 @@ func (r *NatsConfigReconciler) reconcileDelete(ctx context.Context, obj *natsv1a
 }
 
 func (r *NatsConfigReconciler) reconcileResources(ctx context.Context, config *natsv1alpha1.NatsConfig) (ctrl.Result, error) {
-	if err := r.reconcileStatus(ctx, config); err != nil {
+	if err := r.reconcileConfig(ctx, config); err != nil {
 		return r.ManageError(ctx, config, err)
 	}
-
-	// if err := r.reconcileconfig(ctx, config); err != nil {
-	// 	return r.ManageError(ctx, config, err)
-	// }
 
 	return r.ManageSuccess(ctx, config)
 }
 
 func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, config *natsv1alpha1.NatsConfig) error {
-	// if !controllerutil.ContainsFinalizer(config, natsv1alpha1.FinalizerName) {
-	// 	controllerutil.AddFinalizer(config, natsv1alpha1.FinalizerName)
-	// }
+	cfg := &corev1.ConfigMap{}
+	cfgName := client.ObjectKey{
+		Namespace: config.Namespace,
+		Name:      config.Name,
+	}
 
-	// if !controllerutil.HasControllerReference(config) {
-	// 	if err := controllerutil.SetControllerReference(config, pk, r.Scheme); err != nil {
-	// 		return err
-	// 	}
-	// }
+	if err := r.Get(ctx, cfgName, cfg); !errors.IsNotFound(err) {
+		return err
+	}
 
-	return nil
-}
+	operator := &natsv1alpha1.NatsOperator{}
+	operatorName := client.ObjectKey{
+		Namespace: config.Namespace,
+		Name:      config.Spec.OperatorRef.Name,
+	}
 
-func (r *NatsConfigReconciler) reconcileStatus(ctx context.Context, config *natsv1alpha1.NatsConfig) error {
-	return nil
+	if err := r.Get(ctx, operatorName, operator); err != nil {
+		return err
+	}
+
+	systemAccount := &natsv1alpha1.NatsAccount{}
+	systemAccountName := client.ObjectKey{
+		Namespace: config.Namespace,
+		Name:      config.Spec.SystemAccountRef.Name,
+	}
+
+	if err := r.Get(ctx, systemAccountName, systemAccount); err != nil {
+		return err
+	}
+
+	cfg.Namespace = config.Namespace
+	cfg.Name = config.Name
+	cfg.Data = map[string]string{
+		"auth.conf": fmt.Sprintf(AUTH_CONFIG_TEMPLATE, operator.Status.JWT, systemAccount.Status.PublicKey, systemAccount.Status.PublicKey, systemAccount.Status.JWT),
+	}
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfg, func() error {
+		if !controllerutil.HasControllerReference(cfg) {
+			if err := controllerutil.SetControllerReference(config, cfg, r.Scheme); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 // IsCreating ...
@@ -122,14 +151,15 @@ func (r *NatsConfigReconciler) IsCreating(obj *natsv1alpha1.NatsConfig) bool {
 
 // IsSynchronized ...
 func (r *NatsConfigReconciler) IsSynchronized(obj *natsv1alpha1.NatsConfig) bool {
-	return obj.Status.Phase == natsv1alpha1.ConfigPhaseActive
+	return obj.Status.Phase == natsv1alpha1.ConfigPhaseSynchronized
 }
 
 // ManageError ...
 func (r *NatsConfigReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsConfig, err error) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger.Error(err, "error reconciling config", "config", obj.Name)
 
-	logger.Error(err, "reconciliation failed", "config", obj)
+	obj.Status.Phase = natsv1alpha1.ConfigPhaseFailed
 
 	status.SetNatzConfigCondition(obj, status.NewNatzConfigFailedCondition(obj, err))
 
@@ -153,6 +183,7 @@ func (r *NatsConfigReconciler) ManageSuccess(ctx context.Context, obj *natsv1alp
 		return ctrl.Result{}, nil
 	}
 
+	obj.Status.Phase = natsv1alpha1.ConfigPhaseSynchronized
 	status.SetNatzConfigCondition(obj, status.NewNatzConfigSynchronizedCondition(obj))
 
 	if r.IsCreating(obj) {
@@ -176,6 +207,6 @@ func (r *NatsConfigReconciler) ManageSuccess(ctx context.Context, obj *natsv1alp
 func (r *NatsConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&natsv1alpha1.NatsConfig{}).
-		Owns(&corev1.Secret{}).
+		Owns(&corev1.ConfigMap{}).
 		Complete(r)
 }

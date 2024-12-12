@@ -18,6 +18,14 @@ const (
 	AccountPhaseFailed       AccountPhase = "Failed"
 )
 
+// NatsAccountReference is a reference to a NatsAccount
+type NatsAccountReference struct {
+	// Name is the name of the account.
+	Name string `json:"name"`
+	// Namespace is the namespace of the account.
+	Namespace string `json:"namespace,omitempty"`
+}
+
 // ExportType defines the type of import/export.
 type ExportType int
 

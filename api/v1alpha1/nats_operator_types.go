@@ -18,6 +18,13 @@ const (
 	OperatorPhaseFailed       OperatorPhase = "Failed"
 )
 
+// OperatorReference is a reference to an operator.
+type NatsOperatorReference struct {
+	// Name is the name of the operator.
+	Name string `json:"name"`
+	// Namespace is the namespace of the operator.
+	Namespace string `json:"namespace,omitempty"`
+}
 type NatsOperatorSpec struct {
 	// PrivateKey is a reference to a secret that contains the private key
 	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`

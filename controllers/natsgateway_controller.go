@@ -10,7 +10,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
@@ -45,8 +44,6 @@ func NewNatsGatewayReconciler(mgr ctrl.Manager) *NatsGatewayReconciler {
 
 // Reconcile ...
 func (r *NatsGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
 	gateway := &natsv1alpha1.NatsGateway{}
 	if err := r.Get(ctx, req.NamespacedName, gateway); err != nil {
 		if errors.IsNotFound(err) {
@@ -57,8 +54,6 @@ func (r *NatsGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if !gateway.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("processing deletion of gateway")
-
 		if finalizers.HasFinalizer(gateway, natsv1alpha1.FinalizerName) {
 			err := r.reconcileDelete(ctx, gateway)
 			if err != nil {
@@ -72,8 +67,6 @@ func (r *NatsGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// get latest version of the gateway
 	if err := r.Get(ctx, req.NamespacedName, gateway); err != nil {
-		log.Error(err, "gateway not found", "gateway", req.NamespacedName)
-
 		return reconcile.Result{}, err
 	}
 
@@ -88,22 +81,15 @@ func (r *NatsGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 
 func (r *NatsGatewayReconciler) reconcileResources(ctx context.Context, req ctrl.Request, gateway *natsv1alpha1.NatsGateway) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile resources", "name", gateway.Name, "namespace", gateway.Namespace)
-
 	if err := r.reconcileStatus(ctx, gateway); err != nil {
-		log.Error(err, "failed to reconcile status", "name", gateway.Name, "namespace", gateway.Namespace)
 		return err
 	}
 
 	if err := r.reconcileGateway(ctx, req, gateway); err != nil {
-		log.Error(err, "failed to reconcile gateway", "name", gateway.Name, "namespace", gateway.Namespace)
 		return err
 	}
 
 	if err := r.reconcileSecret(ctx, gateway); err != nil {
-		log.Error(err, "failed to reconcile secret", "name", gateway.Name, "namespace", gateway.Namespace)
 		return err
 	}
 
@@ -111,11 +97,7 @@ func (r *NatsGatewayReconciler) reconcileResources(ctx context.Context, req ctrl
 }
 
 func (r *NatsGatewayReconciler) reconcileGateway(ctx context.Context, _ ctrl.Request, gateway *natsv1alpha1.NatsGateway) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile status", "name", gateway.Name, "namespace", gateway.Namespace)
-
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, gateway, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, gateway, func() error {
 		controllerutil.AddFinalizer(gateway, natsv1alpha1.FinalizerName)
 
 		return nil
@@ -124,18 +106,10 @@ func (r *NatsGatewayReconciler) reconcileGateway(ctx context.Context, _ ctrl.Req
 		return err
 	}
 
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		log.Info("account created or updated", "operation", op)
-	}
-
 	return nil
 }
 
 func (r *NatsGatewayReconciler) reconcileSecret(ctx context.Context, gateway *natsv1alpha1.NatsGateway) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile secret", "name", gateway.Name, "namespace", gateway.Namespace)
-
 	gatewaySecret := &corev1.Secret{}
 	gatewaySecretName := client.ObjectKey{
 		Namespace: gateway.Namespace,
@@ -147,25 +121,17 @@ func (r *NatsGatewayReconciler) reconcileSecret(ctx context.Context, gateway *na
 		return err
 	}
 
-	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, gatewaySecret, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, gatewaySecret, func() error {
 		return controllerutil.SetControllerReference(gateway, gatewaySecret, r.Scheme)
 	})
 	if err != nil {
 		return err
 	}
 
-	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		log.Info("secret created or updated", "operation", op)
-	}
-
 	return nil
 }
 
 func (r *NatsGatewayReconciler) reconcileStatus(ctx context.Context, gateway *natsv1alpha1.NatsGateway) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile status", "name", gateway.Name, "namespace", gateway.Namespace)
-
 	phase := natsv1alpha1.GatewayPhaseNone
 
 	if gateway.Status.Phase != phase {
@@ -178,10 +144,6 @@ func (r *NatsGatewayReconciler) reconcileStatus(ctx context.Context, gateway *na
 }
 
 func (r *NatsGatewayReconciler) reconcileDelete(ctx context.Context, gateway *natsv1alpha1.NatsGateway) error {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile delete gateway", "name", gateway.Name, "namespace", gateway.Namespace)
-
 	gateway.SetFinalizers(finalizers.RemoveFinalizer(gateway, natsv1alpha1.FinalizerName))
 	err := r.Update(ctx, gateway)
 	if err != nil && !errors.IsNotFound(err) {

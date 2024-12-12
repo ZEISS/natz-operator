@@ -143,6 +143,11 @@ func setupControllers(mgr ctrl.Manager) error {
 		return err
 	}
 
+	err = controllers.NewNatsConfigReconciler(mgr).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

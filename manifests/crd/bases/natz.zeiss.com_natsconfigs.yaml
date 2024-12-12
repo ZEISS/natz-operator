@@ -37,6 +37,32 @@ spec:
             type: object
           spec:
             description: NatsConfigSpec defines the desired state of NatsConfig
+            properties:
+              operatorRef:
+                description: OperatorRef is a reference to the operator that is managing
+                  the config.
+                properties:
+                  name:
+                    description: Name is the name of the operator.
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the operator.
+                    type: string
+                required:
+                - name
+                type: object
+              systemAccountRef:
+                description: SystemAccountRef is a reference to the system account.
+                properties:
+                  name:
+                    description: Name is the name of the account.
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the account.
+                    type: string
+                required:
+                - name
+                type: object
             type: object
           status:
             description: NatsConfigStatus defines the observed state of NatsConfig

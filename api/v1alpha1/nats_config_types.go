@@ -7,14 +7,20 @@ import (
 type ConfigPhase string
 
 const (
-	ConfigPhaseNone     ConfigPhase = ""
-	ConfigPhaseCreating ConfigPhase = "Creating"
-	ConfigPhaseActive   ConfigPhase = "Active"
-	ConfigPhaseFailed   ConfigPhase = "Failed"
+	ConfigPhaseNone         ConfigPhase = ""
+	ConfigPhasePending      ConfigPhase = "Pending"
+	ConfigPhaseCreating     ConfigPhase = "Creating"
+	ConfigPhaseSynchronized ConfigPhase = "Synchronized"
+	ConfigPhaseFailed       ConfigPhase = "Failed"
 )
 
 // NatsConfigSpec defines the desired state of NatsConfig
-type NatsConfigSpec struct{}
+type NatsConfigSpec struct {
+	// OperatorRef is a reference to the operator that is managing the config.
+	OperatorRef NatsOperatorReference `json:"operatorRef,omitempty"`
+	// SystemAccountRef is a reference to the system account.
+	SystemAccountRef NatsAccountReference `json:"systemAccountRef,omitempty"`
+}
 
 // NatsConfigStatus defines the observed state of NatsConfig
 type NatsConfigStatus struct {
