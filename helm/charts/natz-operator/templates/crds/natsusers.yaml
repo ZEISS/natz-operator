@@ -223,6 +223,7 @@ spec:
                   is paused.
                 type: boolean
               jwt:
+                description: JWT is the JWT for the user
                 type: string
               lastUpdate:
                 description: LastUpdate is the timestamp of the last update.
@@ -238,8 +239,7 @@ spec:
                 - Failed
                 type: string
               publicKey:
-                type: string
-              userSecretName:
+                description: PublicKey is the public key for the user
                 type: string
             required:
             - phase

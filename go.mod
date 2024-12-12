@@ -1,7 +1,8 @@
 module github.com/zeiss/natz-operator
 
-go 1.22.1
-toolchain go1.23.1
+go 1.23.0
+
+toolchain go1.23.3
 
 require (
 	github.com/nats-io/jwt/v2 v2.7.2

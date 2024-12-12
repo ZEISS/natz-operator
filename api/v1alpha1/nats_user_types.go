@@ -96,9 +96,10 @@ func (s *NatsUserSpec) ToNatsJWT() jwt.User {
 
 // NatsUserStatus defines the observed state of NatsUser
 type NatsUserStatus struct {
-	UserSecretName string `json:"userSecretName,omitempty"`
-	PublicKey      string `json:"publicKey,omitempty"`
-	JWT            string `json:"jwt,omitempty"`
+	// PublicKey is the public key for the user
+	PublicKey string `json:"publicKey,omitempty"`
+	// JWT is the JWT for the user
+	JWT string `json:"jwt,omitempty"`
 	// Conditions is an array of conditions that the operator is currently in.
 	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
 	// Phase is the current phase of the operator.
