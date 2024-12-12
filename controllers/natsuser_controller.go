@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -112,7 +113,40 @@ func (r *NatsUserReconciler) reconcileResources(ctx context.Context, user *natsv
 		return r.ManageError(ctx, user, err)
 	}
 
+	if err := r.reconcileCredentials(ctx, user); err != nil {
+		return r.ManageError(ctx, user, err)
+	}
+
 	return r.ManageSuccess(ctx, user)
+}
+
+func (r *NatsUserReconciler) reconcileCredentials(ctx context.Context, user *natsv1alpha1.NatsUser) error {
+	secret := &corev1.Secret{}
+	secretName := client.ObjectKey{
+		Namespace: user.Namespace,
+		Name:      fmt.Sprintf("%s-credentils", user.Name),
+	}
+
+	if err := r.Get(ctx, secretName, secret); !errors.IsNotFound(err) {
+		return err
+	}
+
+	secret.Name = fmt.Sprintf("%s-credentials", user.Name)
+	secret.Namespace = user.Namespace
+	secret.Type = natsv1alpha1.SecretUserCredentialsName
+	secret.Data = map[string][]byte{
+		"user.jwt":   []byte(user.Status.JWT),
+		"user.creds": []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, user.Status.JWT, user.Spec.PrivateKey.Name)),
+	}
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
+		return controllerutil.SetControllerReference(user, secret, r.Scheme)
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // nolint:gocyclo
@@ -180,10 +214,6 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 		return err
 	}
 	user.Status.JWT = jwt
-
-	if !controllerutil.ContainsFinalizer(user, natsv1alpha1.FinalizerName) {
-		controllerutil.AddFinalizer(user, natsv1alpha1.FinalizerName)
-	}
 
 	if !controllerutil.HasControllerReference(user) {
 		if err := controllerutil.SetControllerReference(user, pk, r.Scheme); err != nil {
