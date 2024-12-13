@@ -44,9 +44,9 @@ func (p *Permission) toNats() jwt.Permission {
 // NatsUserSpec defines the desired state of NatsUser
 type NatsUserSpec struct {
 	// PrivateKey is a reference to a secret that contains the private key
-	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`
-	// AccountSigningKey is a reference to a secret that contains the account signing key
-	AccountSigningKey NatsSigningKeyReference `json:"accountSigningKey,omitempty"`
+	PrivateKey NatsKeyReference `json:"privateKey,omitempty"`
+	// SignerKeyRef is a reference to a secret that contains the account signing key
+	SignerKeyRef NatsKeyReference `json:"signerKeyRef,omitempty"`
 	// Permissions define the permissions for the user
 	Permissions Permissions `json:"permissions,omitempty"`
 	// Limits define the limits for the user

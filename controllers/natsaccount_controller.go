@@ -119,10 +119,10 @@ func (r *NatsAccountReconciler) reconcileResources(ctx context.Context, account 
 }
 
 func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
-	sk := &natsv1alpha1.NatsSigningKey{}
+	sk := &natsv1alpha1.NatsKey{}
 	skName := client.ObjectKey{
 		Namespace: account.Namespace,
-		Name:      account.Spec.OperatorSigningKey.Name,
+		Name:      account.Spec.SignerKeyRef.Name,
 	}
 
 	if err := r.Get(ctx, skName, sk); errors.IsNotFound(err) {
@@ -139,7 +139,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 		return err
 	}
 
-	pk := &natsv1alpha1.NatsPrivateKey{}
+	pk := &natsv1alpha1.NatsKey{}
 	pkName := client.ObjectKey{
 		Namespace: account.Namespace,
 		Name:      account.Spec.PrivateKey.Name,

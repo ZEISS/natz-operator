@@ -22,9 +22,8 @@ const (
 )
 
 const (
-	SecretPrivateKeyName      = "natz.zeiss.com/nats-private-key"
+	SecretNameKey             = "natz.zeiss.com/nats-key"
 	SecretUserCredentialsName = "natz.zeiss.com/nats-user-credentials"
-	SecretSigningKeyName      = "natz.zeiss.com/nats-signing-key"
 )
 
 // SecretValueFromSource represents the source of a secret value

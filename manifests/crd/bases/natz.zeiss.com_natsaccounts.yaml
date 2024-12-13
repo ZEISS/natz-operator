@@ -241,10 +241,8 @@ spec:
                   key
                 properties:
                   name:
-                    description: Name is the name of the NatsSigningKey
                     type: string
                   namespace:
-                    description: Namespace is the namespace of the NatsSigningKey
                     type: string
                 required:
                 - name
@@ -254,10 +252,8 @@ spec:
                   private key
                 properties:
                   name:
-                    description: Name is the name of the private key
                     type: string
                   namespace:
-                    description: Namespace is the namespace of the private key
                     type: string
                 required:
                 - name
@@ -269,17 +265,25 @@ spec:
                 description: RevocationList is used to store a mapping of public keys
                   to unix timestamps
                 type: object
+              signerKeyRef:
+                description: SignerKeyRef is the reference to the secret that contains
+                  the signing key
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
               signingKeys:
                 description: SigningKeys is a list of references to secrets that contain
                   the signing keys
                 items:
-                  description: NatsSigningKeyReference is a reference to a NatsSigningKey
                   properties:
                     name:
-                      description: Name is the name of the NatsSigningKey
                       type: string
                     namespace:
-                      description: Namespace is the namespace of the NatsSigningKey
                       type: string
                   required:
                   - name

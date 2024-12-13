@@ -1,12 +1,12 @@
 apiVersion: natz.zeiss.com/v1alpha1
-kind: NatsPrivateKey
+kind: NatsKey
 metadata:
   name: natsaccount-sample-private-key
 spec:
   type: Operator
 ---
 apiVersion: natz.zeiss.com/v1alpha1
-kind: NatsSigningKey
+kind: NatsKey
 metadata:
   name: natsaccount-demo-signing-key
 spec:

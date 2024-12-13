@@ -24,35 +24,35 @@ import (
 )
 
 const (
-	EventReasonSigningKeyFailed       EventReason = "SigningKeyFailed"
-	EventReasonSigningKeySynchronized EventReason = "SigningKeySynchronized"
+	EventReasonPrivateKeyFailed       EventReason = "PrivateKeyFailed"
+	EventReasonPrivateKeySynchronized EventReason = "PrivateKeySynchronized"
 )
 
-// NatsSigningKeyReconciler ...
-type NatsSigningKeyReconciler struct {
+// NatsPrivateKeyReconciler ...
+type NatsPrivateKeyReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }
 
-// NewNatsSigningKeyReconciler ...
-func NewNatsSigningKeyReconciler(mgr ctrl.Manager) *NatsSigningKeyReconciler {
-	return &NatsSigningKeyReconciler{
+// NewNatsKeyReconciler ...
+func NewNatsKeyReconciler(mgr ctrl.Manager) *NatsPrivateKeyReconciler {
+	return &NatsPrivateKeyReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(EventRecorderLabel),
 	}
 }
 
-//+kubebuilder:rbac:groups=natz.zeiss.com,resources=natssigningkeys,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=natz.zeiss.com,resources=natssigningkeys/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=natz.zeiss.com,resources=natssigningkeys/finalizers,verbs=update
+//+kubebuilder:rbac:groups=natz.zeiss.com,resources=natsprivatekeys,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=natz.zeiss.com,resources=natsprivatekeys/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=natz.zeiss.com,resources=natsprivatekeys/finalizers,verbs=update
 //+kubebuilder:rbac:groups=,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile ...
 // nolint:gocyclo
-func (r *NatsSigningKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	sk := &natsv1alpha1.NatsSigningKey{}
+func (r *NatsPrivateKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	sk := &natsv1alpha1.NatsKey{}
 	if err := r.Get(ctx, req.NamespacedName, sk); err != nil {
 		// Request object not found, could have been deleted after reconcile request.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -65,7 +65,7 @@ func (r *NatsSigningKeyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return r.reconcileResources(ctx, sk)
 }
 
-func (r *NatsSigningKeyReconciler) reconcileSigningKey(ctx context.Context, obj *natsv1alpha1.NatsSigningKey) error {
+func (r *NatsPrivateKeyReconciler) reconcilePrivateKey(ctx context.Context, obj *natsv1alpha1.NatsKey) error {
 	if !controllerutil.ContainsFinalizer(obj, natsv1alpha1.FinalizerName) {
 		controllerutil.AddFinalizer(obj, natsv1alpha1.FinalizerName)
 		return r.Update(ctx, obj)
@@ -74,13 +74,13 @@ func (r *NatsSigningKeyReconciler) reconcileSigningKey(ctx context.Context, obj 
 	return nil
 }
 
-func (r *NatsSigningKeyReconciler) reconcileResources(ctx context.Context, sk *natsv1alpha1.NatsSigningKey) (ctrl.Result, error) {
+func (r *NatsPrivateKeyReconciler) reconcileResources(ctx context.Context, sk *natsv1alpha1.NatsKey) (ctrl.Result, error) {
 	err := r.reconcileStatus(ctx, sk)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	err = r.reconcileSigningKey(ctx, sk)
+	err = r.reconcilePrivateKey(ctx, sk)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -93,8 +93,8 @@ func (r *NatsSigningKeyReconciler) reconcileResources(ctx context.Context, sk *n
 	return r.ManageSuccess(ctx, sk)
 }
 
-func (r *NatsSigningKeyReconciler) reconcileStatus(ctx context.Context, sk *natsv1alpha1.NatsSigningKey) error {
-	phase := natsv1alpha1.SigningKeyPhaseSynchronized
+func (r *NatsPrivateKeyReconciler) reconcileStatus(ctx context.Context, sk *natsv1alpha1.NatsKey) error {
+	phase := natsv1alpha1.KeyPhaseSynchronized
 
 	if sk.Status.Phase != phase {
 		sk.Status.Phase = phase
@@ -105,7 +105,7 @@ func (r *NatsSigningKeyReconciler) reconcileStatus(ctx context.Context, sk *nats
 	return nil
 }
 
-func (r *NatsSigningKeyReconciler) reconcileSecret(ctx context.Context, sk *natsv1alpha1.NatsSigningKey) error {
+func (r *NatsPrivateKeyReconciler) reconcileSecret(ctx context.Context, sk *natsv1alpha1.NatsKey) error {
 	secret := &corev1.Secret{}
 	secretName := client.ObjectKey{
 		Namespace: sk.Namespace,
@@ -119,7 +119,7 @@ func (r *NatsSigningKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 
 	secret.Namespace = sk.Namespace
 	secret.Name = sk.Name
-	secret.Type = natsv1alpha1.SecretSigningKeyName
+	secret.Type = natsv1alpha1.SecretNameKey
 	secret.Annotations = map[string]string{
 		natsv1alpha1.OwnerAnnotation: fmt.Sprintf("%s/%s", secret.Namespace, secret.Name),
 	}
@@ -149,18 +149,18 @@ func (r *NatsSigningKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 		return controllerutil.SetControllerReference(sk, secret, r.Scheme)
 	})
 	if err != nil {
-		r.Recorder.Event(sk, corev1.EventTypeWarning, conv.String(EventReasonSigningKeyFailed), "secret creation failed")
+		r.Recorder.Event(sk, corev1.EventTypeWarning, conv.String(EventReasonPrivateKeyFailed), "secret creation failed")
 		return err
 	}
 
 	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		r.Recorder.Event(sk, corev1.EventTypeNormal, conv.String(EventReasonSigningKeySynchronized), "secret created or updated")
+		r.Recorder.Event(sk, corev1.EventTypeNormal, conv.String(EventReasonPrivateKeySynchronized), "secret created or updated")
 	}
 
 	return nil
 }
 
-func (r *NatsSigningKeyReconciler) reconcileDelete(ctx context.Context, sk *natsv1alpha1.NatsSigningKey) (ctrl.Result, error) {
+func (r *NatsPrivateKeyReconciler) reconcileDelete(ctx context.Context, sk *natsv1alpha1.NatsKey) (ctrl.Result, error) {
 	// Get the associated secret
 	secret := &corev1.Secret{}
 	secretName := client.ObjectKey{
@@ -199,22 +199,22 @@ func (r *NatsSigningKeyReconciler) reconcileDelete(ctx context.Context, sk *nats
 }
 
 // IsCreating ...
-func (r *NatsSigningKeyReconciler) IsCreating(obj *natsv1alpha1.NatsSigningKey) bool {
+func (r *NatsPrivateKeyReconciler) IsCreating(obj *natsv1alpha1.NatsKey) bool {
 	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
 }
 
 // IsSynchronized ...
-func (r *NatsSigningKeyReconciler) IsSynchronized(obj *natsv1alpha1.NatsSigningKey) bool {
-	return obj.Status.Phase == natsv1alpha1.SigningKeyPhaseSynchronized
+func (r *NatsPrivateKeyReconciler) IsSynchronized(obj *natsv1alpha1.NatsKey) bool {
+	return obj.Status.Phase == natsv1alpha1.KeyPhaseSynchronized
 }
 
 // ManageSuccess ...
-func (r *NatsSigningKeyReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsSigningKey) (ctrl.Result, error) {
+func (r *NatsPrivateKeyReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsKey) (ctrl.Result, error) {
 	if r.IsSynchronized(obj) {
 		return ctrl.Result{}, nil
 	}
 
-	status.SetNatzSigningKeyCondition(obj, status.NewSigningKeySychronizedCondition(obj))
+	status.SetNatzKeyCondition(obj, status.NewKeySychronizedCondition(obj))
 
 	if r.IsCreating(obj) {
 		return ctrl.Result{Requeue: true}, nil
@@ -232,20 +232,20 @@ func (r *NatsSigningKeyReconciler) ManageSuccess(ctx context.Context, obj *natsv
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonOperatorSynchronized), "signing key synchronized")
+	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonOperatorSynchronized), "key synchronized")
 
 	return ctrl.Result{}, nil
 }
 
 // ManageError ...
-func (r *NatsSigningKeyReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsSigningKey, err error) (ctrl.Result, error) {
-	status.SetNatzSigningKeyCondition(obj, status.NewSigningKeyFailedCondition(obj, err))
+func (r *NatsPrivateKeyReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsKey, err error) (ctrl.Result, error) {
+	status.SetNatzKeyCondition(obj, status.NewKeyFailedCondition(obj, err))
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
 	}
 
-	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonSigningKeyFailed), "secret synchronization failed")
+	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonPrivateKeyFailed), "key synchronization failed")
 
 	var retryInterval time.Duration
 
@@ -256,9 +256,9 @@ func (r *NatsSigningKeyReconciler) ManageError(ctx context.Context, obj *natsv1a
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *NatsSigningKeyReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *NatsPrivateKeyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&natsv1alpha1.NatsSigningKey{}).
+		For(&natsv1alpha1.NatsKey{}).
 		Owns(&corev1.Secret{}).
 		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{})).
 		Complete(r)

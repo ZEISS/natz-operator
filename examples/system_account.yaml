@@ -1,12 +1,12 @@
 apiVersion: natz.zeiss.com/v1alpha1
-kind: NatsPrivateKey
+kind: NatsKey
 metadata:
   name: natsoperator-system-private-key
 spec:
   type: Account
 ---
 apiVersion: natz.zeiss.com/v1alpha1
-kind: NatsSigningKey
+kind: NatsKey
 metadata:
   name: natsoperator-system-signing-key
 spec:
@@ -17,8 +17,8 @@ kind: NatsAccount
 metadata:
   name: natsoperator-system
 spec:
-  operatorSigningKey:
-    name: natsoperator-demo-signing-key
+  signerKeyRef:
+    name: natsoperator-sample-private-key
   privateKey:
     name: natsoperator-system-private-key
   signingKeys:
@@ -26,6 +26,7 @@ spec:
   exports:
     - name: account-monitoring-services
       subject: $SYS.REQ.ACCOUNT.*.*
+      type: 2
       response_type: Stream
       account_token_position: 4
       description: "Request account specific monitoring services for: SUBSZ, CONNZ, LEAFZ, JSZ and INFO"
@@ -37,6 +38,8 @@ spec:
       description: "Account specific monitoring stream"
       info_url: "https://docs.nats.io/nats-server/configuration/sys_accounts"
   limits:
+    exports: -1
+    imports: -1
     subs: -1
     payload: -1
     data: -1

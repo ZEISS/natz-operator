@@ -1,9 +1,10 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"math"
+	"text/template"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,29 @@ const (
 	EventReasonConfigSynchronizeFailed EventReason = "ConfigSynchronizeFailed"
 	EventReasonConfigSynchronized      EventReason = "configSynchronized"
 )
+
+type Template struct {
+	OperatorJWT            string
+	OperatorPublicKey      string
+	SystemAccountPublicKey string
+	SystemAccountJWT       string
+	SigningKey             string
+}
+
+const authConfigTpl = `operator: {{ .OperatorJWT }}
+system_account: {{ .SystemAccountPublicKey }}
+resolver {
+	type: full
+	dir: './jwt'
+	allow_delete: true
+	interval: "2m"
+	timeout: "5s"
+}
+resolver_preload: {
+	{{ .SystemAccountPublicKey }}: {{ .SystemAccountJWT }},
+  ABZPDLWLRAVRE7LGVOB43OSPFG4Y4CEJROQI4YKZ4UN7JXI5ASKZJSSX: {{ .SystemAccountJWT }},
+}
+`
 
 // NatsConfigReconciler reconciles a Natsconfig object
 type NatsConfigReconciler struct {
@@ -125,13 +149,32 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, config *nats
 		return err
 	}
 
+	tpl := Template{
+		OperatorJWT:            operator.Status.JWT,
+		OperatorPublicKey:      operator.Status.PublicKey,
+		SystemAccountPublicKey: systemAccount.Status.PublicKey,
+		SystemAccountJWT:       systemAccount.Status.JWT,
+	}
+
+	tmpl, err := template.New("auth.conf").Parse(authConfigTpl)
+	if err != nil {
+		return err
+	}
+
+	var b bytes.Buffer
+
+	err = tmpl.Execute(&b, tpl)
+	if err != nil {
+		return err
+	}
+
 	cfg.Namespace = config.Namespace
 	cfg.Name = config.Name
 	cfg.Data = map[string]string{
-		"auth.conf": fmt.Sprintf(AUTH_CONFIG_TEMPLATE, operator.Status.JWT, systemAccount.Status.PublicKey, systemAccount.Status.PublicKey, systemAccount.Status.JWT),
+		"auth.conf": b.String(),
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfg, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, cfg, func() error {
 		if !controllerutil.HasControllerReference(cfg) {
 			if err := controllerutil.SetControllerReference(config, cfg, r.Scheme); err != nil {
 				return err
