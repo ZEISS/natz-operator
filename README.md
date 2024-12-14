@@ -19,41 +19,95 @@ helm search repo natz-operator
 
 ## Usage
 
+There are three custom account resources that can be used to configure the operator.
+
+- `NatsOperator`
+- `NatsAccount`
+- `NatsUser`
+
+These can be configured with `NatsKey` to provide a private key and additional signing keys for the operator and accounts.
+
 Creating the operator for the [NATS](https://nats.io/) accounting.
 
 ```yaml
 apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsoperator-sample-private-key
+spec:
+  type: Operator
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsoperator-demo-signing-key
+spec:
+  type: Operator
+---
+apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsOperator
 metadata:
-  namespace: knative-eventing
   name: natsoperator-sample
 spec:
+  privateKey:
+    name: natsoperator-sample-private-key
+  signingKeys:
+    - name: natsoperator-demo-signing-key
+
 ```
 
-Creating an account that supports the use of jetstream.
+Creating the system account for the operator.
 
 ```yaml
 apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsoperator-system-private-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsoperator-system-signing-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsAccount
 metadata:
-  namespace: knative-eventing 
-  name: knative-eventing-account
+  name: natsoperator-system
 spec:
-  operatorRef:
-    name: natsoperator-sample 
-  allowedUserNamespaces:
-  - knative-eventing
-  imports: []
-  exports: []
-  limits: 
-    disk_storage: -1
-    streams: -1
-    conn: -1
-    imports: -1
+  signerKeyRef:
+    name: natsoperator-sample-private-key
+  privateKey:
+    name: natsoperator-system-private-key
+  signingKeys:
+    - name: natsoperator-system-signing-key
+  exports:
+    - name: account-monitoring-services
+      subject: $SYS.REQ.ACCOUNT.*.*
+      type: 2
+      response_type: Stream
+      account_token_position: 4
+      description: "Request account specific monitoring services for: SUBSZ, CONNZ, LEAFZ, JSZ and INFO"
+      info_url: "https://docs.nats.io/nats-server/configuration/sys_accounts"
+    - name: account-monitoring-streams
+      subject: $SYS.ACCOUNT.*.>"
+      type: 1
+      account_token_position: 3
+      description: "Account specific monitoring stream"
+      info_url: "https://docs.nats.io/nats-server/configuration/sys_accounts"
+  limits:
     exports: -1
+    imports: -1
     subs: -1
     payload: -1
     data: -1
+    conn: -1
+    wildcards: true
+    disallow_bearer: true
+
 ```
 
 Creating a user account.
@@ -62,11 +116,10 @@ Creating a user account.
 apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsUser
 metadata:
-  namespace: knative-eventing
   name: knative-eventing-user
 spec:
   accountRef:
-    namespace: knative-eventing
+    namespace: default
     name: knative-eventing-account
   limits:
     payload: -1
@@ -75,6 +128,20 @@ spec:
 ```
 
 ## NATS Operator
+
+In order to create a configuration for the NATS operator, you can use the following configuration.
+
+```yaml
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsConfig
+metadata:
+  name: nats-default-config
+spec:
+  operatorRef:
+    name: natsoperator-sample
+  systemAccountRef:
+    name: natsoperator-system
+```
 
 The operator can be integrated with the NATS operator.
 
@@ -96,20 +163,20 @@ config:
     debug: true
 container:
   patch:
-  - op: add
-    path: "/volumeMounts/-"
-    value:
-      name: auth-config
-      mountPath: "/etc/custom-auth"
+    - op: add
+      path: "/volumeMounts/-"
+      value:
+        name: auth-config
+        mountPath: "/etc/custom-auth"
 statefulSet:
   patch:
-  - op: add
-    path: /spec/template/spec/volumes/-
-    value:
-      name: "auth-config"
-      secret:
-        defaultMode: 420
-        secretName: "natsoperator-sample-server-config"
+    - op: add
+      path: /spec/template/spec/volumes/-
+      value:
+        name: auth-config
+        configMap:
+          name: nats-default-config
+
 ```
 
 ## Development

@@ -1,5 +1,3 @@
-namespaceOverride: "knative-eventing"
-
 config:
   jetstream:
     enabled: true
@@ -17,17 +15,16 @@ config:
     debug: true
 container:
   patch:
-  - op: add
-    path: "/volumeMounts/-"
-    value:
-      name: auth-config
-      mountPath: "/etc/custom-auth"
+    - op: add
+      path: "/volumeMounts/-"
+      value:
+        name: auth-config
+        mountPath: "/etc/custom-auth"
 statefulSet:
   patch:
-  - op: add
-    path: /spec/template/spec/volumes/-
-    value:
-      name: "auth-config"
-      secret:
-        defaultMode: 420
-        secretName: "natsoperator-sample-server-config"
+    - op: add
+      path: /spec/template/spec/volumes/-
+      value:
+        name: auth-config
+        configMap:
+          name: nats-default-config

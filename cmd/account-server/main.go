@@ -49,8 +49,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().StringVar(&f.metricsAddr, "metrics-bind-address", ":8080", "metrics endpoint")
-	rootCmd.Flags().StringVar(&f.probeAddr, "health-probe-bind-address", ":8081", "health probe")
+	rootCmd.Flags().StringVar(&f.metricsAddr, "metrics-bind-address", ":8084", "metrics endpoint")
+	rootCmd.Flags().StringVar(&f.probeAddr, "health-probe-bind-address", ":8085", "health probe")
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 

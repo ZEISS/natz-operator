@@ -18,11 +18,20 @@ const (
 	OperatorPhaseFailed       OperatorPhase = "Failed"
 )
 
+// OperatorReference is a reference to an operator.
+type NatsOperatorReference struct {
+	// Name is the name of the operator.
+	Name string `json:"name"`
+	// Namespace is the namespace of the operator.
+	Namespace string `json:"namespace,omitempty"`
+}
 type NatsOperatorSpec struct {
 	// PrivateKey is a reference to a secret that contains the private key
-	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`
+	PrivateKey NatsKeyReference `json:"privateKey,omitempty"`
+	// EnableSystemAccount is a flag that indicates if the system account should be created.
+	EnableSystemAccount bool `json:"enableSystemAccount,omitempty"`
 	// SigningKeys is a list of references to secrets that contain the signing keys
-	SigningKeys []NatsSigningKeyReference `json:"signingKeys,omitempty"`
+	SigningKeys []NatsKeyReference `json:"signingKeys,omitempty"`
 }
 
 type NatsOperatorStatus struct {

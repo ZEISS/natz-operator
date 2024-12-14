@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.3
-  name: natssigningkeys.natz.zeiss.com
+  name: natskeys.natz.zeiss.com
 spec:
   group: natz.zeiss.com
   names:
-    kind: NatsSigningKey
-    listKind: NatsSigningKeyList
-    plural: natssigningkeys
-    singular: natssigningkey
+    kind: NatsKey
+    listKind: NatsKeyList
+    plural: natskeys
+    singular: natskey
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: NatsSigningKey is the Schema for the natssigningkeys API
+        description: NatsKey is the Schema for the key.
         properties:
           apiVersion:
             description: |-
@@ -37,14 +37,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: NatsSigningKeySpec defines the desired state of SigningKey
+            description: NatsPrivateSpec defines the desired state of private
             properties:
               prevent_deletion:
-                description: PreventDeletion is a flag that indicates if the key should
+                description: PreventDeletion is a flag that indicates if the  should
                   be locked to prevent deletion.
                 type: boolean
               type:
-                description: Type is the type of the NKey.
+                description: Type is the type of the N.
                 enum:
                 - Operator
                 - Account
@@ -54,11 +54,11 @@ spec:
             - type
             type: object
           status:
-            description: NatsSigningKeyStatus defines the observed state of SigningKey
+            description: NatsPrivateStatus defines the observed state of private
             properties:
               conditions:
-                description: Conditions is an array of conditions that the operator
-                  is currently in.
+                description: Conditions is an array of conditions that the private  is
+                  currently in.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -123,7 +123,7 @@ spec:
                 format: date-time
                 type: string
               phase:
-                description: Phase is the current phase of the operator.
+                description: Phase is the current phase of the private .
                 enum:
                 - None
                 - Pending

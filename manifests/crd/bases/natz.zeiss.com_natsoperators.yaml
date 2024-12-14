@@ -37,15 +37,17 @@ spec:
             type: object
           spec:
             properties:
+              enableSystemAccount:
+                description: EnableSystemAccount is a flag that indicates if the system
+                  account should be created.
+                type: boolean
               privateKey:
                 description: PrivateKey is a reference to a secret that contains the
                   private key
                 properties:
                   name:
-                    description: Name is the name of the private key
                     type: string
                   namespace:
-                    description: Namespace is the namespace of the private key
                     type: string
                 required:
                 - name
@@ -54,13 +56,10 @@ spec:
                 description: SigningKeys is a list of references to secrets that contain
                   the signing keys
                 items:
-                  description: NatsSigningKeyReference is a reference to a NatsSigningKey
                   properties:
                     name:
-                      description: Name is the name of the NatsSigningKey
                       type: string
                     namespace:
-                      description: Namespace is the namespace of the NatsSigningKey
                       type: string
                   required:
                   - name

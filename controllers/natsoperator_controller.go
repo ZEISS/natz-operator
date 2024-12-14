@@ -6,13 +6,11 @@ import (
 	"math"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -66,10 +64,6 @@ func NewNatsOperatorReconciler(mgr ctrl.Manager) *NatsOperatorReconciler {
 // Reconcile ...
 // nolint:gocyclo
 func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
-	log.Info("reconcile operator", "name", req.Name, "namespace", req.Namespace)
-
 	operator := &natsv1alpha1.NatsOperator{}
 	if err := r.Get(ctx, req.NamespacedName, operator); err != nil {
 		// Request object not found, could have been deleted after reconcile request.
@@ -89,21 +83,11 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	err := r.reconcileStatus(ctx, operator)
-	if err != nil {
+	if err := r.reconcileOperator(ctx, operator); err != nil {
 		return err
 	}
 
-	if err = r.reconcileOperator(ctx, operator); err != nil {
-		return err
-	}
-
-	err = r.reconcileServerConfig(ctx, operator)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return nil
 }
 
 func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, obj *natsv1alpha1.NatsOperator) error {
@@ -148,68 +132,6 @@ func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, obj *nat
 	return nil
 }
 
-func (r *NatsOperatorReconciler) reconcileServerConfig(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	serverConfig := &corev1.Secret{}
-	serverConfigName := client.ObjectKey{
-		Namespace: operator.Namespace,
-		Name:      fmt.Sprintf("%v-server-config", operator.Name),
-	}
-
-	err := r.Get(ctx, serverConfigName, serverConfig)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-
-	if !errors.IsNotFound(err) {
-		return nil
-	}
-
-	systemAccount := &natsv1alpha1.NatsAccount{}
-	systemAccountName := client.ObjectKey{
-		Namespace: operator.Namespace,
-		Name:      fmt.Sprintf("%v-system", operator.Name),
-	}
-
-	err = r.Get(ctx, systemAccountName, systemAccount)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-
-	serverConfig.Namespace = operator.Namespace
-	serverConfig.Name = serverConfigName.Name
-	serverConfig.Type = "natz.zeiss.com/nats-configuration"
-
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, serverConfig, func() error {
-		template := fmt.Sprintf(AUTH_CONFIG_TEMPLATE, operator.Status.JWT, systemAccount.Status.PublicKey, systemAccount.Status.PublicKey, systemAccount.Status.JWT)
-		serverConfig.Data = map[string][]byte{
-			OPERATOR_CONFIG_FILE: []byte(template),
-		}
-
-		return controllerutil.SetControllerReference(operator, serverConfig, r.Scheme)
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *NatsOperatorReconciler) reconcileStatus(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	phase := utilx.IfElse(
-		utilx.Empty(operator.Status.PublicKey) && utilx.Empty(operator.Status.JWT),
-		natsv1alpha1.OperatorPhasePending,
-		natsv1alpha1.OperatorPhaseSynchronized,
-	)
-
-	if operator.Status.Phase != phase {
-		operator.Status.Phase = phase
-
-		return r.Status().Update(ctx, operator)
-	}
-
-	return nil
-}
-
 func (r *NatsOperatorReconciler) reconcileDelete(ctx context.Context, operator *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
 	// Remove our finalizer from the list.
 	controllerutil.RemoveFinalizer(operator, natsv1alpha1.FinalizerName)
@@ -237,6 +159,8 @@ func (r *NatsOperatorReconciler) IsSynchronized(obj *natsv1alpha1.NatsOperator) 
 
 // ManageError ...
 func (r *NatsOperatorReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsOperator, err error) (ctrl.Result, error) {
+	obj.Status.Phase = natsv1alpha1.OperatorPhaseFailed
+
 	status.SetNatzOperatorCondition(obj, status.NewOperatorFailedCondition(obj, err))
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
@@ -259,6 +183,7 @@ func (r *NatsOperatorReconciler) ManageSuccess(ctx context.Context, obj *natsv1a
 		return ctrl.Result{}, nil
 	}
 
+	obj.Status.Phase = natsv1alpha1.OperatorPhaseSynchronized
 	status.SetNatzOperatorCondition(obj, status.NewOperatorSychronizedCondition(obj))
 
 	if r.IsCreating(obj) {

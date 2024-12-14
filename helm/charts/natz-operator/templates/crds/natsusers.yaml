@@ -39,19 +39,6 @@ spec:
           spec:
             description: NatsUserSpec defines the desired state of NatsUser
             properties:
-              accountSigningKey:
-                description: AccountSigningKey is a reference to a secret that contains
-                  the account signing key
-                properties:
-                  name:
-                    description: Name is the name of the NatsSigningKey
-                    type: string
-                  namespace:
-                    description: Namespace is the namespace of the NatsSigningKey
-                    type: string
-                required:
-                - name
-                type: object
               allowed_connection_types:
                 description: AllowedConnectionTypes is a list of allowed connection
                   types
@@ -148,10 +135,19 @@ spec:
                   private key
                 properties:
                   name:
-                    description: Name is the name of the private key
                     type: string
                   namespace:
-                    description: Namespace is the namespace of the private key
+                    type: string
+                required:
+                - name
+                type: object
+              signerKeyRef:
+                description: SignerKeyRef is a reference to a secret that contains
+                  the account signing key
+                properties:
+                  name:
+                    type: string
+                  namespace:
                     type: string
                 required:
                 - name
@@ -223,6 +219,7 @@ spec:
                   is paused.
                 type: boolean
               jwt:
+                description: JWT is the JWT for the user
                 type: string
               lastUpdate:
                 description: LastUpdate is the timestamp of the last update.
@@ -238,8 +235,7 @@ spec:
                 - Failed
                 type: string
               publicKey:
-                type: string
-              userSecretName:
+                description: PublicKey is the public key for the user
                 type: string
             required:
             - phase

@@ -18,6 +18,14 @@ const (
 	AccountPhaseFailed       AccountPhase = "Failed"
 )
 
+// NatsAccountReference is a reference to a NatsAccount
+type NatsAccountReference struct {
+	// Name is the name of the account.
+	Name string `json:"name"`
+	// Namespace is the namespace of the account.
+	Namespace string `json:"namespace,omitempty"`
+}
+
 // ExportType defines the type of import/export.
 type ExportType int
 
@@ -55,12 +63,14 @@ type OperatorLimits struct {
 
 // NatsAccountSpec defines the desired state of NatsAccount
 type NatsAccountSpec struct {
+	// SignerKeyRef is the reference to the secret that contains the signing key
+	SignerKeyRef NatsKeyReference `json:"signerKeyRef,omitempty"`
 	// PrivateKey is a reference to a secret that contains the private key
-	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`
+	PrivateKey NatsKeyReference `json:"privateKey,omitempty"`
 	// SigningKeys is a list of references to secrets that contain the signing keys
-	SigningKeys []NatsSigningKeyReference `json:"signingKeys,omitempty"`
+	SigningKeys []NatsKeyReference `json:"signingKeys,omitempty"`
 	// OperatorSigningKey is the reference to the operator signing key
-	OperatorSigningKey NatsSigningKeyReference `json:"operatorSigningKey,omitempty"`
+	OperatorSigningKey NatsKeyReference `json:"operatorSigningKey,omitempty"`
 	// Namespaces that are allowed for user creation.
 	// If a NatsUser is referencing this account outside of these namespaces, the operator will create an event for it saying that it's not allowed.
 	AllowUserNamespaces []string `json:"allowedUserNamespaces,omitempty"`

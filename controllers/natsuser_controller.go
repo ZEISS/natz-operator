@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -63,8 +64,6 @@ func NewNatsUserReconciler(mgr ctrl.Manager) *NatsUserReconciler {
 // Reconcile ...
 // nolint:gocyclo
 func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
 	user := &natsv1alpha1.NatsUser{}
 	if err := r.Get(ctx, req.NamespacedName, user); err != nil {
 		if errors.IsNotFound(err) {
@@ -80,12 +79,14 @@ func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// get latest version of the account
 	if err := r.Get(ctx, req.NamespacedName, user); err != nil {
-		log.Error(err, "account not found", "account", req.NamespacedName)
-
-		return reconcile.Result{}, err
+		return r.ManageError(ctx, user, err)
 	}
 
-	return r.reconcileResources(ctx, user)
+	if err := r.reconcileResources(ctx, user); err != nil {
+		return r.ManageError(ctx, user, err)
+	}
+
+	return r.ManageSuccess(ctx, user)
 }
 
 func (r *NatsUserReconciler) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsUser) (ctrl.Result, error) {
@@ -103,27 +104,56 @@ func (r *NatsUserReconciler) reconcileDelete(ctx context.Context, obj *natsv1alp
 	return ctrl.Result{Requeue: true}, nil
 }
 
-func (r *NatsUserReconciler) reconcileResources(ctx context.Context, user *natsv1alpha1.NatsUser) (ctrl.Result, error) {
-	if err := r.reconcileStatus(ctx, user); err != nil {
-		return r.ManageError(ctx, user, err)
-	}
-
+func (r *NatsUserReconciler) reconcileResources(ctx context.Context, user *natsv1alpha1.NatsUser) error {
 	if err := r.reconcileUser(ctx, user); err != nil {
-		return r.ManageError(ctx, user, err)
+		return err
 	}
 
-	return r.ManageSuccess(ctx, user)
+	if err := r.reconcileCredentials(ctx, user); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *NatsUserReconciler) reconcileCredentials(ctx context.Context, user *natsv1alpha1.NatsUser) error {
+	secret := &corev1.Secret{}
+	secretName := client.ObjectKey{
+		Namespace: user.Namespace,
+		Name:      fmt.Sprintf("%s-credentils", user.Name),
+	}
+
+	if err := r.Get(ctx, secretName, secret); !errors.IsNotFound(err) {
+		return err
+	}
+
+	secret.Name = fmt.Sprintf("%s-credentials", user.Name)
+	secret.Namespace = user.Namespace
+	secret.Type = natsv1alpha1.SecretUserCredentialsName
+	secret.Data = map[string][]byte{
+		"user.jwt":   []byte(user.Status.JWT),
+		"user.creds": []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, user.Status.JWT, user.Spec.PrivateKey.Name)),
+	}
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
+		return controllerutil.SetControllerReference(user, secret, r.Scheme)
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // nolint:gocyclo
 func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alpha1.NatsUser) error {
-	sk := &natsv1alpha1.NatsSigningKey{}
+	sk := &natsv1alpha1.NatsKey{}
 	skName := client.ObjectKey{
 		Namespace: user.Namespace,
-		Name:      user.Spec.AccountSigningKey.Name,
+		Name:      user.Spec.SignerKeyRef.Name,
 	}
 
-	if err := r.Get(ctx, skName, sk); errors.IsNotFound(err) {
+	if err := r.Get(ctx, skName, sk); err != nil {
 		return err
 	}
 
@@ -137,7 +167,7 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 		return err
 	}
 
-	pk := &natsv1alpha1.NatsPrivateKey{}
+	pk := &natsv1alpha1.NatsKey{}
 	pkName := client.ObjectKey{
 		Namespace: user.Namespace,
 		Name:      user.Spec.PrivateKey.Name,
@@ -150,7 +180,7 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 	pkSecret := &corev1.Secret{}
 	pkSecretName := client.ObjectKey{
 		Namespace: pk.Namespace,
-		Name:      pk.Name,
+		Name:      user.Spec.PrivateKey.Name,
 	}
 
 	if err := r.Get(ctx, pkSecretName, pkSecret); errors.IsNotFound(err) {
@@ -181,30 +211,10 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 	}
 	user.Status.JWT = jwt
 
-	if !controllerutil.ContainsFinalizer(user, natsv1alpha1.FinalizerName) {
-		controllerutil.AddFinalizer(user, natsv1alpha1.FinalizerName)
-	}
-
 	if !controllerutil.HasControllerReference(user) {
 		if err := controllerutil.SetControllerReference(user, pk, r.Scheme); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (r *NatsUserReconciler) reconcileStatus(ctx context.Context, user *natsv1alpha1.NatsUser) error {
-	phase := utilx.IfElse(
-		utilx.Empty(user.Status.PublicKey) && utilx.Empty(user.Status.JWT),
-		natsv1alpha1.UserPhasePending,
-		natsv1alpha1.UserPhaseSynchronized,
-	)
-
-	if user.Status.Phase != phase {
-		user.Status.Phase = phase
-
-		return r.Status().Update(ctx, user)
 	}
 
 	return nil
@@ -223,9 +233,9 @@ func (r *NatsUserReconciler) IsSynchronized(obj *natsv1alpha1.NatsUser) bool {
 // ManageError ...
 func (r *NatsUserReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsUser, err error) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-
 	logger.Error(err, "reconciliation failed", "user", obj)
 
+	obj.Status.Phase = natsv1alpha1.UserPhaseFailed
 	status.SetNatzUserCondition(obj, status.NewUserFailedCondition(obj, err))
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
@@ -248,6 +258,7 @@ func (r *NatsUserReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha
 		return ctrl.Result{}, nil
 	}
 
+	obj.Status.Phase = natsv1alpha1.UserPhaseSynchronized
 	status.SetNatzUserCondition(obj, status.NewUserSychronizedCondition(obj))
 
 	if r.IsCreating(obj) {

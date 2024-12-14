@@ -3,3 +3,7 @@ kind: NatsConfig
 metadata:
   name: nats-default-config
 spec:
+  operatorRef:
+    name: natsoperator-sample
+  systemAccountRef:
+    name: natsoperator-system

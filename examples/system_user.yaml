@@ -1,5 +1,5 @@
 apiVersion: natz.zeiss.com/v1alpha1
-kind: NatsPrivateKey
+kind: NatsKey
 metadata:
   name: natsuser-system-private-key
 spec:
@@ -12,8 +12,8 @@ metadata:
 spec:
   privateKey:
     name: natsuser-system-private-key
-  accountSigningKey:
-    name: natsoperator-system-signing-key
+  signerKeyRef:
+    name: natsoperator-system-private-key
   limits:
     payload: -1
     subs: -1

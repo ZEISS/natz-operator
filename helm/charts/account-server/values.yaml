@@ -19,7 +19,8 @@ crds:
 ## Globally shared configuration
 global:
   # -- Common labels for the all resources
-  additionalLabels: {}
+  additionalLabels:
+    {}
     # app: natz
 
   # Default image used by all components
@@ -35,9 +36,10 @@ global:
   imagePullSecrets: []
 
   # -- Labels for the all deployed pods
-  podLabels: {}
+  podLabels:
+    {}
 
-   # -- Annotations for the all deployed pods
+    # -- Annotations for the all deployed pods
   podAnnotations: {}
 
   # -- Toggle and define pod-level security context.
@@ -62,7 +64,7 @@ global:
 ## NATZ Configs
 configs:
 
-## 
+##
 
 ## Account Server
 controller:
@@ -74,7 +76,7 @@ controller:
   replicas: 1
 
   # -- SecretName of the NATS credentials
-  secretName: natsoperator-sample-jwt
+  secretName: natsuser-system
 
   # -- NATS configuration
   nats:
@@ -115,9 +117,10 @@ controller:
   podAnnotations: {}
 
   # -- Labels to be added to natz controller pods
-  podLabels: {}
+  podLabels:
+    {}
 
-   # -- Additional volumes to the natz controller pod
+    # -- Additional volumes to the natz controller pod
   volumes: []
 
   # -- [Node selector]

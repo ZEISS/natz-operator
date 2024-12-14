@@ -44,9 +44,9 @@ func (p *Permission) toNats() jwt.Permission {
 // NatsUserSpec defines the desired state of NatsUser
 type NatsUserSpec struct {
 	// PrivateKey is a reference to a secret that contains the private key
-	PrivateKey NatsPrivateKeyReference `json:"privateKey,omitempty"`
-	// AccountSigningKey is a reference to a secret that contains the account signing key
-	AccountSigningKey NatsSigningKeyReference `json:"accountSigningKey,omitempty"`
+	PrivateKey NatsKeyReference `json:"privateKey,omitempty"`
+	// SignerKeyRef is a reference to a secret that contains the account signing key
+	SignerKeyRef NatsKeyReference `json:"signerKeyRef,omitempty"`
 	// Permissions define the permissions for the user
 	Permissions Permissions `json:"permissions,omitempty"`
 	// Limits define the limits for the user
@@ -96,9 +96,10 @@ func (s *NatsUserSpec) ToNatsJWT() jwt.User {
 
 // NatsUserStatus defines the observed state of NatsUser
 type NatsUserStatus struct {
-	UserSecretName string `json:"userSecretName,omitempty"`
-	PublicKey      string `json:"publicKey,omitempty"`
-	JWT            string `json:"jwt,omitempty"`
+	// PublicKey is the public key for the user
+	PublicKey string `json:"publicKey,omitempty"`
+	// JWT is the JWT for the user
+	JWT string `json:"jwt,omitempty"`
 	// Conditions is an array of conditions that the operator is currently in.
 	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
 	// Phase is the current phase of the operator.
