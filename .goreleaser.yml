@@ -1,8 +1,7 @@
 project_name: natz-operator
 
 builds:
-  -
-    id: operator
+  - id: operator
     binary: operator-{{.Os}}-{{.Arch}}
     main: cmd/operator/main.go
     goos:
@@ -12,15 +11,14 @@ builds:
       - arm
       - arm64
     ignore:
-        - goos: darwin
-          goarch: 386
+      - goos: darwin
+        goarch: 386
     env:
       - CGO_ENABLED=0
     ldflags:
-        - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     no_unique_dist_dir: true
-  -
-    id: account-server
+  - id: account-server
     binary: account-server-{{.Os}}-{{.Arch}}
     main: cmd/account-server/main.go
     goos:
@@ -30,29 +28,26 @@ builds:
       - arm
       - arm64
     ignore:
-        - goos: darwin
-          goarch: 386
+      - goos: darwin
+        goarch: 386
     env:
       - CGO_ENABLED=0
     ldflags:
-        - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     no_unique_dist_dir: true
-  
+
 archives:
-  -
-    id: operator
+  - id: operator
     builds:
       - operator
     name_template: "operator_{{.Version}}_{{.Os}}_{{.Arch}}"
-  -
-    id: account-server
+  - id: account-server
     builds:
       - account-server
     name_template: "account_server_{{.Version}}_{{.Os}}_{{.Arch}}"
 
 dockers:
-  -
-    dockerfile: Dockerfile.nonroot
+  - dockerfile: Dockerfile
     goos: linux
     goarch: amd64
     ids:
@@ -69,8 +64,7 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--build-arg=BINARY=operator-linux-amd64"
       - "--platform=linux/amd64"
-  -
-    dockerfile: Dockerfile.nonroot
+  - dockerfile: Dockerfile
     goos: linux
     goarch: amd64
     ids:
