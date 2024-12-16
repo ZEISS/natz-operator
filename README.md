@@ -7,6 +7,8 @@
 
 A Kubernetes operator for [NATS](https://nats.io/) accounting.
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ZEISS/natz-operator?quickstart=1)
+
 ## Installation
 
 [Helm](https://helm.sh/) can be used to install the `natz-operator` to your Kubernetes cluster.
