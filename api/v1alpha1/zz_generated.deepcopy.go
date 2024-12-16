@@ -721,6 +721,7 @@ func (in *NatsUserSpec) DeepCopyInto(out *NatsUserSpec) {
 	*out = *in
 	out.PrivateKey = in.PrivateKey
 	out.SignerKeyRef = in.SignerKeyRef
+	out.AccountRef = in.AccountRef
 	in.Permissions.DeepCopyInto(&out.Permissions)
 	in.Limits.DeepCopyInto(&out.Limits)
 	if in.AllowedConnectionTypes != nil {

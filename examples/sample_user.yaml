@@ -8,7 +8,7 @@ spec:
 apiVersion: natz.zeiss.com/v1alpha1
 kind: NatsKey
 metadata:
-  name: natsaccount-demo-signing-key
+  name: natsaccount-sample-signing-key
 spec:
   type: Account
 ---
@@ -22,7 +22,7 @@ spec:
   privateKey:
     name: natsaccount-sample-private-key
   signingKeys:
-    - name: natsaccount-demo-signing-key
+    - name: natsaccount-sample-signing-key
   imports: []
   exports: []
   limits:
@@ -45,10 +45,12 @@ kind: NatsUser
 metadata:
   name: natsuser-sample
 spec:
+  accountRef:
+    name: natsaccount-sample
   privateKey:
     name: natsuser-sample-private-key
   signerKeyRef:
-    name: natsaccount-sample-private-key
+    name: natsaccount-sample-signing-key
   permissions:
     sub:
       allow:

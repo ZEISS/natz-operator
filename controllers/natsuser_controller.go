@@ -177,15 +177,15 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 		return err
 	}
 
-	// skAccount := &natsv1alpha1.NatsAccount{}
-	// skAccountName := client.ObjectKey{
-	// 	Namespace: user.Namespace,
-	// 	Name:      user.Spec.AccountRef.Name,
-	// }
+	skAccount := &natsv1alpha1.NatsAccount{}
+	skAccountName := client.ObjectKey{
+		Namespace: user.Namespace,
+		Name:      user.Spec.AccountRef.Name,
+	}
 
-	// if err := r.Get(ctx, skAccountName, skAccount); err != nil {
-	// 	return err
-	// }
+	if err := r.Get(ctx, skAccountName, skAccount); err != nil {
+		return err
+	}
 
 	pk := &natsv1alpha1.NatsKey{}
 	pkName := client.ObjectKey{
@@ -225,7 +225,7 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 	token := jwt.NewUserClaims(public)
 	token.User = user.Spec.ToNatsJWT()
 	// by default sigining key is the account public key
-	// token.IssuerAccount = skAccount.Status.PublicKey
+	token.IssuerAccount = skAccount.Status.PublicKey
 
 	t, err := token.Encode(signerKp)
 	if err != nil {

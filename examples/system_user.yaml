@@ -10,6 +10,8 @@ kind: NatsUser
 metadata:
   name: natsuser-system
 spec:
+  accountRef:
+    name: natsoperator-system
   privateKey:
     name: natsuser-system-private-key
   signerKeyRef:

@@ -178,29 +178,29 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 	token.Name = account.Name
 	token.Account = account.Spec.ToJWTAccount()
 
-	// for _, key := range account.Spec.SigningKeys {
-	// 	sk := &corev1.Secret{}
-	// 	skName := client.ObjectKey{
-	// 		Namespace: account.Namespace,
-	// 		Name:      key.Name,
-	// 	}
+	for _, key := range account.Spec.SigningKeys {
+		sk := &corev1.Secret{}
+		skName := client.ObjectKey{
+			Namespace: account.Namespace,
+			Name:      key.Name,
+		}
 
-	// 	if err := r.Get(ctx, skName, sk); err != nil {
-	// 		return err
-	// 	}
+		if err := r.Get(ctx, skName, sk); err != nil {
+			return err
+		}
 
-	// 	skSigner, err := nkeys.FromSeed(sk.Data[OPERATOR_SEED_KEY])
-	// 	if err != nil {
-	// 		return err
-	// 	}
+		skSigner, err := nkeys.FromSeed(sk.Data[OPERATOR_SEED_KEY])
+		if err != nil {
+			return err
+		}
 
-	// 	pkSigner, err := skSigner.PublicKey()
-	// 	if err != nil {
-	// 		return err
-	// 	}
+		pkSigner, err := skSigner.PublicKey()
+		if err != nil {
+			return err
+		}
 
-	// 	token.SigningKeys.Add(pkSigner)
-	// }
+		token.SigningKeys.Add(pkSigner)
+	}
 
 	t, err := token.Encode(signerKp)
 	if err != nil {

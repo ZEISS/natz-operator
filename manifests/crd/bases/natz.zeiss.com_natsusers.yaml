@@ -39,6 +39,18 @@ spec:
           spec:
             description: NatsUserSpec defines the desired state of NatsUser
             properties:
+              accountRef:
+                description: AccountRef is a reference to the account
+                properties:
+                  name:
+                    description: Name is the name of the
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the private
+                    type: string
+                required:
+                - name
+                type: object
               allowed_connection_types:
                 description: AllowedConnectionTypes is a list of allowed connection
                   types
@@ -153,6 +165,7 @@ spec:
                 - name
                 type: object
             required:
+            - accountRef
             - signerKeyRef
             type: object
           status:
