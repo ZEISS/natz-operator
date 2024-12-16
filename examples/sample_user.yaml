@@ -1,0 +1,67 @@
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsaccount-sample-private-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsaccount-demo-signing-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsAccount
+metadata:
+  name: natsaccount-sample
+spec:
+  signerKeyRef:
+    name: natsoperator-sample-private-key
+  privateKey:
+    name: natsaccount-sample-private-key
+  signingKeys:
+    - name: natsaccount-demo-signing-key
+  imports: []
+  exports: []
+  limits:
+    conn: -1
+    imports: -1
+    exports: -1
+    subs: -1
+    payload: -1
+    data: -1
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsuser-sample-private-key
+spec:
+  type: User
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsUser
+metadata:
+  name: natsuser-sample
+spec:
+  privateKey:
+    name: natsuser-sample-private-key
+  signerKeyRef:
+    name: natsaccount-sample-private-key
+  permissions:
+    sub:
+      allow:
+        - "app.input.>"
+        - "app.process.data"
+    pub:
+      allow:
+        - "app.output.>"
+    resp:
+      # Allow request/reply
+      max: 1
+      ttl: -1
+  limits:
+    payload: -1
+    subs: -1
+    data: -1

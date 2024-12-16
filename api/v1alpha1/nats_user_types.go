@@ -46,7 +46,7 @@ type NatsUserSpec struct {
 	// PrivateKey is a reference to a secret that contains the private key
 	PrivateKey NatsKeyReference `json:"privateKey,omitempty"`
 	// SignerKeyRef is a reference to a secret that contains the account signing key
-	SignerKeyRef NatsKeyReference `json:"signerKeyRef,omitempty"`
+	SignerKeyRef NatsKeyReference `json:"signerKeyRef"`
 	// Permissions define the permissions for the user
 	Permissions Permissions `json:"permissions,omitempty"`
 	// Limits define the limits for the user

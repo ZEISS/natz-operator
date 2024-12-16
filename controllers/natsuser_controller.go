@@ -117,6 +117,16 @@ func (r *NatsUserReconciler) reconcileResources(ctx context.Context, user *natsv
 }
 
 func (r *NatsUserReconciler) reconcileCredentials(ctx context.Context, user *natsv1alpha1.NatsUser) error {
+	privateKey := &corev1.Secret{}
+	privateKeyName := client.ObjectKey{
+		Namespace: user.Namespace,
+		Name:      user.Spec.PrivateKey.Name,
+	}
+
+	if err := r.Get(ctx, privateKeyName, privateKey); err != nil {
+		return err
+	}
+
 	secret := &corev1.Secret{}
 	secretName := client.ObjectKey{
 		Namespace: user.Namespace,
@@ -132,7 +142,7 @@ func (r *NatsUserReconciler) reconcileCredentials(ctx context.Context, user *nat
 	secret.Type = natsv1alpha1.SecretUserCredentialsName
 	secret.Data = map[string][]byte{
 		"user.jwt":   []byte(user.Status.JWT),
-		"user.creds": []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, user.Status.JWT, user.Spec.PrivateKey.Name)),
+		"user.creds": []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, user.Status.JWT, privateKey.Data[OPERATOR_SEED_KEY])),
 	}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
@@ -167,6 +177,16 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 		return err
 	}
 
+	// skAccount := &natsv1alpha1.NatsAccount{}
+	// skAccountName := client.ObjectKey{
+	// 	Namespace: user.Namespace,
+	// 	Name:      user.Spec.AccountRef.Name,
+	// }
+
+	// if err := r.Get(ctx, skAccountName, skAccount); err != nil {
+	// 	return err
+	// }
+
 	pk := &natsv1alpha1.NatsKey{}
 	pkName := client.ObjectKey{
 		Namespace: user.Namespace,
@@ -183,7 +203,7 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 		Name:      user.Spec.PrivateKey.Name,
 	}
 
-	if err := r.Get(ctx, pkSecretName, pkSecret); errors.IsNotFound(err) {
+	if err := r.Get(ctx, pkSecretName, pkSecret); err != nil {
 		return err
 	}
 
@@ -204,12 +224,14 @@ func (r *NatsUserReconciler) reconcileUser(ctx context.Context, user *natsv1alph
 
 	token := jwt.NewUserClaims(public)
 	token.User = user.Spec.ToNatsJWT()
+	// by default sigining key is the account public key
+	// token.IssuerAccount = skAccount.Status.PublicKey
 
-	jwt, err := token.Encode(signerKp)
+	t, err := token.Encode(signerKp)
 	if err != nil {
 		return err
 	}
-	user.Status.JWT = jwt
+	user.Status.JWT = t
 
 	if !controllerutil.HasControllerReference(user) {
 		if err := controllerutil.SetControllerReference(user, pk, r.Scheme); err != nil {

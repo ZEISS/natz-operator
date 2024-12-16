@@ -175,13 +175,38 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 	}
 
 	token := jwt.NewAccountClaims(public)
+	token.Name = account.Name
 	token.Account = account.Spec.ToJWTAccount()
 
-	jwt, err := token.Encode(signerKp)
+	// for _, key := range account.Spec.SigningKeys {
+	// 	sk := &corev1.Secret{}
+	// 	skName := client.ObjectKey{
+	// 		Namespace: account.Namespace,
+	// 		Name:      key.Name,
+	// 	}
+
+	// 	if err := r.Get(ctx, skName, sk); err != nil {
+	// 		return err
+	// 	}
+
+	// 	skSigner, err := nkeys.FromSeed(sk.Data[OPERATOR_SEED_KEY])
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	pkSigner, err := skSigner.PublicKey()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	token.SigningKeys.Add(pkSigner)
+	// }
+
+	t, err := token.Encode(signerKp)
 	if err != nil {
 		return err
 	}
-	account.Status.JWT = jwt
+	account.Status.JWT = t
 	account.Status.PublicKey = public
 
 	if !controllerutil.ContainsFinalizer(account, natsv1alpha1.FinalizerName) {

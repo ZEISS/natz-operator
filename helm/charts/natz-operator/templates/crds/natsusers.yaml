@@ -152,6 +152,8 @@ spec:
                 required:
                 - name
                 type: object
+            required:
+            - signerKeyRef
             type: object
           status:
             description: NatsUserStatus defines the observed state of NatsUser
