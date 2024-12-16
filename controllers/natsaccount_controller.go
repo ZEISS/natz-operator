@@ -118,6 +118,7 @@ func (r *NatsAccountReconciler) reconcileResources(ctx context.Context, account 
 	return nil
 }
 
+// nolint:gocyclo
 func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
 	sk := &natsv1alpha1.NatsKey{}
 	skName := client.ObjectKey{
