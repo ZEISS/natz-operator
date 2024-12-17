@@ -17,24 +17,26 @@ kind: NatsAccount
 metadata:
   name: natsoperator-system
 spec:
-  name: SYS
   signerKeyRef:
     name: natsoperator-system-private-key
   privateKey:
     name: natsoperator-system-private-key
   signingKeys:
     - name: natsoperator-system-signing-key
-  pub:
-    allow:
-      - $SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP
-      - $SYS.REQ.CLAIMS.UPDATE
-    sub:
-      allow:
-        - $SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP
-    resp:
-      max: -1
-      ttl: -1
-export:
+  exports:
+    - name: account-monitoring-services
+      subject: $SYS.REQ.ACCOUNT.*.*
+      type: 2
+      response_type: Stream
+      account_token_position: 4
+      description: "Request account specific monitoring services for: SUBSZ, CONNZ, LEAFZ, JSZ and INFO"
+      info_url: "https://docs.nats.io/nats-server/configuration/sys_accounts"
+    - name: account-monitoring-streams
+      subject: $SYS.ACCOUNT.*.>"
+      type: 1
+      account_token_position: 3
+      description: "Account specific monitoring stream"
+      info_url: "https://docs.nats.io/nats-server/configuration/sys_accounts"
   limits:
     exports: -1
     imports: -1

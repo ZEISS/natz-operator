@@ -35,6 +35,21 @@ type Template struct {
 	SystemAccountPublicKey string
 	SystemAccountJWT       string
 	SigningKey             string
+	Gateway                TemplateGateway
+}
+
+// HasGateways ...
+func (t *Template) HasGateways() bool {
+	return slices.Len(t.Gateway.Gateways) > 0
+}
+
+type TemplateGateway struct {
+	User     string
+	Password string
+	Gateways []struct {
+		Name string
+		URL  string
+	}
 }
 
 const authConfigTpl = `operator: {{ .OperatorJWT }}
@@ -48,8 +63,21 @@ resolver {
 }
 resolver_preload: {
 	{{ .SystemAccountPublicKey }}: {{ .SystemAccountJWT }},
-  ABZPDLWLRAVRE7LGVOB43OSPFG4Y4CEJROQI4YKZ4UN7JXI5ASKZJSSX: {{ .SystemAccountJWT }},
 }
+{{ if hasGateways }}
+gateway: {
+  authorization {
+    user: {{ .Gateway.User }}
+    password: {{ .Gateway.Password }}
+  }
+
+  gateways: [
+    {{- range .Gateway.Gateways }}
+    { name: {{ .Name }}, url: {{ .URL }} },
+    {{- end }}
+  ]
+}
+{{end}}
 `
 
 // NatsConfigReconciler reconciles a Natsconfig object
@@ -156,7 +184,9 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, config *nats
 		SystemAccountJWT:       systemAccount.Status.JWT,
 	}
 
-	tmpl, err := template.New("auth.conf").Parse(authConfigTpl)
+	tmpl, err := template.New("auth.conf").Funcs(template.FuncMap{
+		"hasGateways": tpl.HasGateways,
+	}).Parse(authConfigTpl)
 	if err != nil {
 		return err
 	}

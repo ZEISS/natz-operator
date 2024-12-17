@@ -10,26 +10,9 @@ const (
 	GatewayPhaseNone     GatewayPhase = ""
 	GatewayPhaseCreating GatewayPhase = "Creating"
 	GatewayPhaseActive   GatewayPhase = "Active"
+	GatewaySynchronized  GatewayPhase = "Synchronized"
 	GatewayPhaseFailed   GatewayPhase = "Failed"
 )
-
-type NatsGatewaySpec struct {
-	URL      string                `json:"url"`
-	Name     string                `json:"name,omitempty"`
-	Username string                `json:"username"`
-	Password SecretValueFromSource `json:"password"`
-}
-
-type NatsGatewayStatus struct {
-	// Phase is the current state of the gateway
-	Phase GatewayPhase `json:"phase"`
-
-	// ControlPaused indicates if the controller paused the control of the gateway
-	ControlPaused bool `json:"controlPaused,omitempty"`
-}
-
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
 
 // NatsGatewayRef is a reference to a NatsGateway
 type NatsgatewayReference struct {
@@ -38,6 +21,31 @@ type NatsgatewayReference struct {
 	// Namespace is the namespace of the gateway
 	Namespace string `json:"namespace"`
 }
+
+type NatsGatewaySpec struct {
+	// URL is the URL of the gateway.
+	URL string `json:"url"`
+	// Username is the username of the gateway.
+	Username SecretValueFromSource `json:"username,omitempty"`
+	// Password is the password of the gateway.
+	Password SecretValueFromSource `json:"password,omitempty"`
+}
+
+type NatsGatewayStatus struct {
+	// Conditions is an array of conditions that the operator is currently in.
+	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
+	// Phase is the current phase of the operator.
+	//
+	// +kubebuilder:validation:Enum={None,Pending,Creating,Synchronized,Failed}
+	Phase GatewayPhase `json:"phase"`
+	// ControlPaused is a flag that indicates if the operator is paused.
+	ControlPaused bool `json:"controlPaused,omitempty" optional:"true"`
+	// LastUpdate is the timestamp of the last update.
+	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
+}
+
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 type NatsGateway struct {
 	metav1.TypeMeta   `json:",inline"`

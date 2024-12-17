@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"context"
+	"math"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -10,16 +12,22 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
-	"github.com/zeiss/pkg/cast"
+	"github.com/zeiss/natz-operator/pkg/status"
+	"github.com/zeiss/pkg/conv"
 	"github.com/zeiss/pkg/k8s/finalizers"
+	"github.com/zeiss/pkg/slices"
+	"github.com/zeiss/pkg/utilx"
 )
 
 const (
-	EventReasonGatewaySucceeded = "GatewaySucceeded"
-	EventReasonGatewayFailed    = "GatewayFailed"
+	EventReasonGatewaySucceeded    = "GatewaySucceeded"
+	EventReasonGatewaySynchronized = "GatewaySynchronized"
+	EventReasonGatewayFailed       = "GatewayFailed"
 )
 
 // NatsGatewayReconciler ...
@@ -70,30 +78,27 @@ func (r *NatsGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return reconcile.Result{}, err
 	}
 
-	err := r.reconcileResources(ctx, req, gateway)
-	if err != nil {
-		r.Recorder.Event(gateway, corev1.EventTypeWarning, cast.String(EventReasonGatewayFailed), "gateway resources reconciliation failed")
-		gateway.Status.Phase = natsv1alpha1.GatewayPhaseFailed
-		return reconcile.Result{}, r.Status().Update(ctx, gateway)
-	}
-
-	return reconcile.Result{}, nil
+	return r.reconcileResources(ctx, req, gateway)
 }
 
-func (r *NatsGatewayReconciler) reconcileResources(ctx context.Context, req ctrl.Request, gateway *natsv1alpha1.NatsGateway) error {
-	if err := r.reconcileStatus(ctx, gateway); err != nil {
-		return err
+func (r *NatsGatewayReconciler) reconcileResources(ctx context.Context, req ctrl.Request, gateway *natsv1alpha1.NatsGateway) (ctrl.Result, error) {
+	if err := r.reconcileGateway(ctx, req, gateway); err != nil {
+		return r.ManageError(ctx, gateway, err)
 	}
 
 	if err := r.reconcileGateway(ctx, req, gateway); err != nil {
-		return err
+		return r.ManageError(ctx, gateway, err)
 	}
 
-	if err := r.reconcileSecret(ctx, gateway); err != nil {
-		return err
+	if err := r.reconcileUsername(ctx, gateway); err != nil {
+		return r.ManageError(ctx, gateway, err)
 	}
 
-	return nil
+	if err := r.reconcilePassword(ctx, gateway); err != nil {
+		return r.ManageError(ctx, gateway, err)
+	}
+
+	return r.ManageSuccess(ctx, gateway)
 }
 
 func (r *NatsGatewayReconciler) reconcileGateway(ctx context.Context, _ ctrl.Request, gateway *natsv1alpha1.NatsGateway) error {
@@ -109,20 +114,19 @@ func (r *NatsGatewayReconciler) reconcileGateway(ctx context.Context, _ ctrl.Req
 	return nil
 }
 
-func (r *NatsGatewayReconciler) reconcileSecret(ctx context.Context, gateway *natsv1alpha1.NatsGateway) error {
-	gatewaySecret := &corev1.Secret{}
-	gatewaySecretName := client.ObjectKey{
+func (r *NatsGatewayReconciler) reconcilePassword(ctx context.Context, gateway *natsv1alpha1.NatsGateway) error {
+	gatewayPwdSecret := &corev1.Secret{}
+	gatewayPwdSecretName := client.ObjectKey{
 		Namespace: gateway.Namespace,
 		Name:      gateway.Spec.Password.SecretKeyRef.Name,
 	}
 
-	if err := r.Get(ctx, gatewaySecretName, gatewaySecret); errors.IsNotFound(err) {
-		r.Recorder.Event(gateway, corev1.EventTypeWarning, cast.String(EventReasonGatewayFailed), "gateway secret not found")
+	if err := r.Get(ctx, gatewayPwdSecretName, gatewayPwdSecret); err != nil {
 		return err
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, gatewaySecret, func() error {
-		return controllerutil.SetControllerReference(gateway, gatewaySecret, r.Scheme)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, gatewayPwdSecret, func() error {
+		return controllerutil.SetControllerReference(gateway, gatewayPwdSecret, r.Scheme)
 	})
 	if err != nil {
 		return err
@@ -131,13 +135,22 @@ func (r *NatsGatewayReconciler) reconcileSecret(ctx context.Context, gateway *na
 	return nil
 }
 
-func (r *NatsGatewayReconciler) reconcileStatus(ctx context.Context, gateway *natsv1alpha1.NatsGateway) error {
-	phase := natsv1alpha1.GatewayPhaseNone
+func (r *NatsGatewayReconciler) reconcileUsername(ctx context.Context, gateway *natsv1alpha1.NatsGateway) error {
+	gatewayUserSecret := &corev1.Secret{}
+	gatewayUserSecretName := client.ObjectKey{
+		Namespace: gateway.Namespace,
+		Name:      gateway.Spec.Username.SecretKeyRef.Name,
+	}
 
-	if gateway.Status.Phase != phase {
-		gateway.Status.Phase = phase
+	if err := r.Get(ctx, gatewayUserSecretName, gatewayUserSecret); err != nil {
+		return err
+	}
 
-		return r.Status().Update(ctx, gateway)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, gatewayUserSecret, func() error {
+		return controllerutil.SetControllerReference(gateway, gatewayUserSecret, r.Scheme)
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -153,10 +166,70 @@ func (r *NatsGatewayReconciler) reconcileDelete(ctx context.Context, gateway *na
 	return nil
 }
 
+// ManageError ...
+func (r *NatsGatewayReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsGateway, err error) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	logger.Error(err, "error reconciling gateway", "gateway", obj.Name)
+
+	obj.Status.Phase = natsv1alpha1.GatewayPhaseFailed
+
+	status.SetNatzGatewayCondition(obj, status.NewNatzGatewayFailedCondition(obj, err))
+
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
+	}
+
+	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonGatewayFailed), "gateway synchronization failed")
+
+	var retryInterval time.Duration
+
+	return reconcile.Result{
+		RequeueAfter: time.Duration(math.Min(float64(retryInterval.Nanoseconds()*2), float64(time.Hour.Nanoseconds()*6))),
+		Requeue:      true,
+	}, nil
+}
+
+// IsCreating ...
+func (r *NatsGatewayReconciler) IsCreating(obj *natsv1alpha1.NatsGateway) bool {
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+}
+
+// IsSynchronized ...
+func (r *NatsGatewayReconciler) IsSynchronized(obj *natsv1alpha1.NatsGateway) bool {
+	return obj.Status.Phase == natsv1alpha1.GatewaySynchronized
+}
+
+// ManageSuccess ...
+func (r *NatsGatewayReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsGateway) (ctrl.Result, error) {
+	if r.IsSynchronized(obj) {
+		return ctrl.Result{}, nil
+	}
+
+	obj.Status.Phase = natsv1alpha1.GatewaySynchronized
+	status.SetNatzGatewayCondition(obj, status.NewNatzGatewaySynchronizedCondition(obj))
+
+	if r.IsCreating(obj) {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	if err := r.Client.Status().Update(ctx, obj); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonGatewaySynchronized), "gateway synchronized")
+
+	return ctrl.Result{}, nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *NatsGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&natsv1alpha1.NatsGateway{}).
 		Owns(&corev1.Secret{}).
+		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.LabelChangedPredicate{})).
 		Complete(r)
 }

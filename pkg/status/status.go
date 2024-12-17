@@ -57,6 +57,35 @@ func SetNatzConfigCondition(obj *natsv1alpha1.NatsConfig, condition metav1.Condi
 	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
 }
 
+// SetNatzGatewayCondition ...
+func SetNatzGatewayCondition(obj *natsv1alpha1.NatsGateway, condition metav1.Condition) {
+	obj.Status.Conditions = SetCondition(condition, obj.Status.Conditions...)
+}
+
+// NewNatzGatewaySynchronizedCondition creates the provisioning started condition in cluster conditions.
+func NewNatzGatewaySynchronizedCondition(obj *natsv1alpha1.NatsGateway) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeSynchronized,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            fmt.Sprintf("the gateway has successfully created: %s", obj.Name),
+		Reason:             natsv1alpha1.ConditionReasonSynchronized,
+	}
+}
+
+// NewNatzGatewayFailedCondition creates the provisioning started condition in cluster conditions.
+func NewNatzGatewayFailedCondition(obj *natsv1alpha1.NatsGateway, err error) metav1.Condition {
+	return metav1.Condition{
+		Type:               natsv1alpha1.ConditionTypeFailed,
+		ObservedGeneration: obj.Generation,
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Message:            err.Error(),
+		Reason:             natsv1alpha1.ConditionReasonFailed,
+	}
+}
+
 // NewNatzConfigSynchronizedCondition creates the provisioning started condition in cluster conditions.
 func NewNatzConfigSynchronizedCondition(obj *natsv1alpha1.NatsConfig) metav1.Condition {
 	return metav1.Condition{

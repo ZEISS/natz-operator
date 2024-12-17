@@ -74,7 +74,6 @@ type NatsAccountSpec struct {
 	// Namespaces that are allowed for user creation.
 	// If a NatsUser is referencing this account outside of these namespaces, the operator will create an event for it saying that it's not allowed.
 	AllowUserNamespaces []string `json:"allowedUserNamespaces,omitempty"`
-
 	// These fields are directly mappejwtd into the NATS JWT claim
 	Imports     []*jwt.Import      `json:"imports,omitempty"`
 	Exports     []Export           `json:"exports,omitempty"`

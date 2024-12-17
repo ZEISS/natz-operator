@@ -38,6 +38,22 @@ spec:
           spec:
             description: NatsConfigSpec defines the desired state of NatsConfig
             properties:
+              gateways:
+                description: Gateways is a list of gateways that should be configured.
+                items:
+                  description: NatsGatewayRef is a reference to a NatsGateway
+                  properties:
+                    name:
+                      description: Name is the name of the gateway
+                      type: string
+                    namespace:
+                      description: Namespace is the namespace of the gateway
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
               operatorRef:
                 description: OperatorRef is a reference to the operator that is managing
                   the config.
@@ -63,6 +79,9 @@ spec:
                 required:
                 - name
                 type: object
+            required:
+            - operatorRef
+            - systemAccountRef
             type: object
           status:
             description: NatsConfigStatus defines the observed state of NatsConfig
