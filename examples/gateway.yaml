@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: gateway-north-password
+  name: gateway-north-secret
 data:
   username: demo
   password: NjJlYjE2NWMwNzBhNDFkNWMxYjU4ZDlkM2Q3MjVjYTE=
@@ -18,5 +18,5 @@ spec:
       name: gateway-north-secret
   password:
     secretKeyRef:
-      key: username
+      key: password
       name: gateway-north-secret

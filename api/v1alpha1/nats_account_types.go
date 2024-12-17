@@ -18,6 +18,12 @@ const (
 	AccountPhaseFailed       AccountPhase = "Failed"
 )
 
+// AnnotationPartOf is an annotation that is used to indicate that a resource is part of another resource.
+const AnnotationPartOf = "natz.zeiss.com/part-of"
+
+// AnnotationName is an annotation that is used to indicate the name of a resource.
+const AnnotationName = "natz.zeiss.com/name"
+
 // NatsAccountReference is a reference to a NatsAccount
 type NatsAccountReference struct {
 	// Name is the name of the account.

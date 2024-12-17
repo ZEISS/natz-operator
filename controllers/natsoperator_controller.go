@@ -157,6 +157,11 @@ func (r *NatsOperatorReconciler) IsSynchronized(obj *natsv1alpha1.NatsOperator) 
 	return obj.Status.Phase == natsv1alpha1.OperatorPhaseSynchronized
 }
 
+// IsPaused ...
+func (r *NatsOperatorReconciler) IsPaused(obj *natsv1alpha1.NatsOperator) bool {
+	return obj.Status.ControlPaused
+}
+
 // ManageError ...
 func (r *NatsOperatorReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsOperator, err error) (ctrl.Result, error) {
 	obj.Status.Phase = natsv1alpha1.OperatorPhaseFailed
