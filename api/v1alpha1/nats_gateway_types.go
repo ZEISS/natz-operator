@@ -31,6 +31,14 @@ type NatsGatewayStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
+// NatsGatewayRef is a reference to a NatsGateway
+type NatsgatewayReference struct {
+	// Name is the name of the gateway
+	Name string `json:"name"`
+	// Namespace is the namespace of the gateway
+	Namespace string `json:"namespace"`
+}
+
 type NatsGateway struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

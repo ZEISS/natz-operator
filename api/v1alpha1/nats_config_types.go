@@ -20,6 +20,8 @@ type NatsConfigSpec struct {
 	OperatorRef NatsOperatorReference `json:"operatorRef,omitempty"`
 	// SystemAccountRef is a reference to the system account.
 	SystemAccountRef NatsAccountReference `json:"systemAccountRef,omitempty"`
+	// Gateways is a list of gateways that should be configured.
+	Gateways []NatsgatewayReference `json:"gateways,omitempty"`
 }
 
 // NatsConfigStatus defines the observed state of NatsConfig
