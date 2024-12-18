@@ -83,11 +83,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
-	if err := r.reconcileOperator(ctx, operator); err != nil {
-		return err
-	}
-
-	return nil
+	return r.reconcileOperator(ctx, operator)
 }
 
 func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, obj *natsv1alpha1.NatsOperator) error {

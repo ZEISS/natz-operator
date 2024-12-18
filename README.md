@@ -26,6 +26,8 @@ There are three custom account resources that can be used to configure the opera
 - `NatsOperator`
 - `NatsAccount`
 - `NatsUser`
+- `NatsConfiguration`
+- `NatsGateway`
 
 These can be configured with `NatsKey` to provide a private key and additional signing keys for the operator and accounts.
 
@@ -129,6 +131,56 @@ spec:
     data: -1
 ```
 
+## NATS Configuration
+
+The NATS configuration can be created using the following configuration.
+
+```yaml
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsConfig
+metadata:
+  name: nats-default-config
+spec:
+  operatorRef:
+    name: natsoperator-sample
+  systemAccountRef:
+    name: natsoperator-system
+```
+
+This creates a new `ConfigMap` with the NATS configuration.
+This configuration can be merged with the NATS operator configuration.
+
+## Gateways
+
+NATS gateways can be created using the following configuration.
+
+:warning: do not store passwords in the YAMl configuration files.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gateway-north-secret
+data:
+  username: demo
+  password: NjJlYjE2NWMwNzBhNDFkNWMxYjU4ZDlkM2Q3MjVjYTE=
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsGateway
+metadata:
+  name: harry
+spec:
+  url: nats://nats.north:4222
+  username:
+    secretKeyRef:
+      key: username
+      name: gateway-north-secret
+  password:
+    secretKeyRef:
+      key: password
+      name: gateway-north-secret
+```
+
 ## NATS Operator
 
 In order to create a configuration for the NATS operator, you can use the following configuration.
@@ -177,8 +229,7 @@ statefulSet:
       value:
         name: auth-config
         configMap:
-          name: nats-default-config
-
+          name: nats-default-configs
 ```
 
 ## Development
