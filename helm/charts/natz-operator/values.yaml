@@ -19,7 +19,8 @@ crds:
 ## Globally shared configuration
 global:
   # -- Common labels for the all resources
-  additionalLabels: {}
+  additionalLabels:
+    {}
     # app: natz
 
   # Default image used by all components
@@ -35,9 +36,10 @@ global:
   imagePullSecrets: []
 
   # -- Labels for the all deployed pods
-  podLabels: {}
+  podLabels:
+    {}
 
-   # -- Annotations for the all deployed pods
+    # -- Annotations for the all deployed pods
   podAnnotations: {}
 
   # -- Toggle and define pod-level security context.
@@ -62,7 +64,7 @@ global:
 ## NATZ Configs
 configs:
 
-## 
+##
 
 ## NATZ Controller
 controller:
@@ -107,9 +109,10 @@ controller:
   podAnnotations: {}
 
   # -- Labels to be added to natz controller pods
-  podLabels: {}
+  podLabels:
+    {}
 
-   # -- Additional volumes to the natz controller pod
+    # -- Additional volumes to the natz controller pod
   volumes: []
 
   # -- [Node selector]
@@ -184,26 +187,3 @@ controller:
 
   # -- Init containers to add to the natz controller pod
   initContainers: []
-
-  # -- Sidecar containers to add to the natz controller pod
-  kubeRbacProxy:
-    args:
-      - --secure-listen-address=0.0.0.0:8443
-      - --upstream=http://127.0.0.1:8080/
-      - --logtostderr=true
-      - --v=0
-    containerSecurityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-    image:
-      repository: gcr.io/kubebuilder/kube-rbac-proxy
-      tag: v0.13.1
-    resources:
-      limits:
-        cpu: 500m
-        memory: 128Mi
-      requests:
-        cpu: 5m
-        memory: 64Mi
