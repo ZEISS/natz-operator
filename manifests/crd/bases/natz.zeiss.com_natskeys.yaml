@@ -17,7 +17,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: NatsKey is the Schema for the key.
+        description: NatsKey is the Schema for a NATS key.
         properties:
           apiVersion:
             description: |-
@@ -37,8 +37,12 @@ spec:
           metadata:
             type: object
           spec:
-            description: NatsPrivateSpec defines the desired state of private
+            description: NatsKeySpec defines the desired state of a NATS key.
             properties:
+              paused:
+                default: false
+                description: Paused is a flag that indicates if the  is paused.
+                type: boolean
               prevent_deletion:
                 description: PreventDeletion is a flag that indicates if the  should
                   be locked to prevent deletion.
@@ -54,7 +58,7 @@ spec:
             - type
             type: object
           status:
-            description: NatsPrivateStatus defines the observed state of private
+            description: NatsKeyStatus defines the observed state of a NATS key.
             properties:
               conditions:
                 description: Conditions is an array of conditions that the private  is

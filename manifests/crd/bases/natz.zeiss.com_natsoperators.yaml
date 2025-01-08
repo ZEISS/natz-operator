@@ -46,8 +46,10 @@ spec:
                   private key
                 properties:
                   name:
+                    description: Name is the name of the key as a reference
                     type: string
                   namespace:
+                    description: Namespace is the namespace of the key as a reference
                     type: string
                 required:
                 - name
@@ -58,8 +60,10 @@ spec:
                 items:
                   properties:
                     name:
+                      description: Name is the name of the key as a reference
                       type: string
                     namespace:
+                      description: Namespace is the namespace of the key as a reference
                       type: string
                   required:
                   - name

@@ -24,8 +24,9 @@ import (
 )
 
 const (
-	EventReasonPrivateKeyFailed       EventReason = "PrivateKeyFailed"
-	EventReasonPrivateKeySynchronized EventReason = "PrivateKeySynchronized"
+	EventReasonKeyFailed       EventReason = "Failed"
+	EventReasonKeySynchronized EventReason = "Synchronized"
+	EventReasonStatusPaused    EventReason = "Paused"
 )
 
 // NatsPrivateKeyReconciler ...
@@ -49,7 +50,7 @@ func NewNatsKeyReconciler(mgr ctrl.Manager) *NatsPrivateKeyReconciler {
 //+kubebuilder:rbac:groups=natz.zeiss.com,resources=natsprivatekeys/finalizers,verbs=update
 //+kubebuilder:rbac:groups=,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
-// Reconcile ...
+// Reconcile is the main reconciliation loop for the operator.
 // nolint:gocyclo
 func (r *NatsPrivateKeyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	sk := &natsv1alpha1.NatsKey{}
@@ -62,7 +63,25 @@ func (r *NatsPrivateKeyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return r.reconcileDelete(ctx, sk)
 	}
 
+	if sk.Spec.Paused {
+		return r.reconcilePaused(ctx, sk)
+	}
+
 	return r.reconcileResources(ctx, sk)
+}
+
+func (r *NatsPrivateKeyReconciler) reconcilePaused(ctx context.Context, sk *natsv1alpha1.NatsKey) (ctrl.Result, error) {
+	if sk.Status.ControlPaused {
+		return ctrl.Result{}, nil
+	}
+
+	if sk.Spec.Paused {
+		sk.Status.ControlPaused = true
+
+		return ctrl.Result{}, r.Status().Update(ctx, sk)
+	}
+
+	return ctrl.Result{}, nil
 }
 
 func (r *NatsPrivateKeyReconciler) reconcilePrivateKey(ctx context.Context, obj *natsv1alpha1.NatsKey) error {
@@ -112,8 +131,7 @@ func (r *NatsPrivateKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 		Name:      sk.Name,
 	}
 
-	err := r.Get(ctx, secretName, secret)
-	if !errors.IsNotFound(err) {
+	if err := r.Get(ctx, secretName, secret); !errors.IsNotFound(err) {
 		return err
 	}
 
@@ -149,12 +167,12 @@ func (r *NatsPrivateKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 		return controllerutil.SetControllerReference(sk, secret, r.Scheme)
 	})
 	if err != nil {
-		r.Recorder.Event(sk, corev1.EventTypeWarning, conv.String(EventReasonPrivateKeyFailed), "secret creation failed")
+		r.Recorder.Event(sk, corev1.EventTypeWarning, conv.String(EventReasonKeyFailed), "secret creation failed")
 		return err
 	}
 
 	if op == controllerutil.OperationResultCreated || op == controllerutil.OperationResultUpdated {
-		r.Recorder.Event(sk, corev1.EventTypeNormal, conv.String(EventReasonPrivateKeySynchronized), "secret created or updated")
+		r.Recorder.Event(sk, corev1.EventTypeNormal, conv.String(EventReasonKeySynchronized), "secret created or updated")
 	}
 
 	return nil
@@ -208,6 +226,11 @@ func (r *NatsPrivateKeyReconciler) IsSynchronized(obj *natsv1alpha1.NatsKey) boo
 	return obj.Status.Phase == natsv1alpha1.KeyPhaseSynchronized
 }
 
+// IsControlPaused ...
+func (r *NatsPrivateKeyReconciler) IsControlPaused(obj *natsv1alpha1.NatsKey) bool {
+	return obj.Status.ControlPaused
+}
+
 // ManageSuccess ...
 func (r *NatsPrivateKeyReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsKey) (ctrl.Result, error) {
 	if r.IsSynchronized(obj) {
@@ -232,7 +255,7 @@ func (r *NatsPrivateKeyReconciler) ManageSuccess(ctx context.Context, obj *natsv
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonOperatorSynchronized), "key synchronized")
+	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonOperatorSynchronized), "synchronization successful")
 
 	return ctrl.Result{}, nil
 }
@@ -245,7 +268,7 @@ func (r *NatsPrivateKeyReconciler) ManageError(ctx context.Context, obj *natsv1a
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
 	}
 
-	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonPrivateKeyFailed), "key synchronization failed")
+	r.Recorder.Event(obj, corev1.EventTypeWarning, conv.String(EventReasonKeyFailed), "synchronization failed")
 
 	var retryInterval time.Duration
 

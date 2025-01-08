@@ -57,7 +57,6 @@ spec:
     name: natsoperator-sample-private-key
   signingKeys:
     - name: natsoperator-demo-signing-key
-
 ```
 
 Creating the system account for the operator.

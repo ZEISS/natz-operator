@@ -10,7 +10,7 @@ GO_MOD 				?= $(shell ${GO} list -m)
 GO_KUSTOMIZE 	?= $(GO_RUN_TOOLS) sigs.k8s.io/kustomize/kustomize/v5
 
 IMAGE_TAG_BASE 		?= ghcr.io/zeiss/natz-operator/operator
-IMG 				?= $(IMAGE_TAG_BASE):$(VERSION)
+IMG 							?= $(IMAGE_TAG_BASE):$(VERSION)
 
 ifndef ignore-not-found
   ignore-not-found = false
@@ -31,6 +31,9 @@ release: ## Create a release
 .PHONY: up
 up: ## Run the operator locally.
 	air -c .air.toml
+
+.PHONY: start
+start: up ## Alias for up.
 
 .PHONY: install
 install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
