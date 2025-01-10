@@ -21,7 +21,6 @@ var (
 
 func init() {
 	RootCmd.AddCommand(CredsCmd)
-	CredsCmd.AddCommand(CredsJWTTokenCmd)
 
 	RootCmd.PersistentFlags().BoolVarP(&config.Verbose, "verbose", "v", config.Verbose, "verbose output")
 	RootCmd.PersistentFlags().BoolVarP(&config.Force, "force", "f", config.Force, "force overwrite")

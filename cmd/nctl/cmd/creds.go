@@ -23,17 +23,7 @@ var CredsCmd = &cobra.Command{
 	RunE:  func(cmd *cobra.Command, args []string) error { return runCreds(cmd.Context()) },
 }
 
-func runCreds(_ context.Context) error {
-	return nil // no-op
-}
-
-var CredsJWTTokenCmd = &cobra.Command{
-	Use:   "jwt",
-	Short: "Get a JWT token",
-	RunE:  func(cmd *cobra.Command, args []string) error { return runCredsJWTToken(cmd.Context()) },
-}
-
-func runCredsJWTToken(ctx context.Context) error {
+func runCreds(ctx context.Context) error {
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", config.GetKubeConfig())
 	if err != nil {
 		return err
