@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/zeiss/pkg/utilx"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -37,12 +38,7 @@ const (
 )
 
 func (os OperationPhase) Completed() bool {
-	switch os {
-	case OperationFailed, OperationError, OperationSucceeded:
-		return true
-	}
-
-	return false
+	return utilx.Or(os == OperationFailed, os == OperationSucceeded)
 }
 
 func (os OperationPhase) Synchronized() bool {
