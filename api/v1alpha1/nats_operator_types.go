@@ -32,6 +32,12 @@ type NatsOperatorSpec struct {
 	EnableSystemAccount bool `json:"enableSystemAccount,omitempty"`
 	// SigningKeys is a list of references to secrets that contain the signing keys
 	SigningKeys []NatsKeyReference `json:"signingKeys,omitempty"`
+	// PreventDeletion is a flag that indicates if the  should be locked to prevent deletion.
+	// +kubebuilder:default=false
+	PreventDeletion bool `json:"prevent_deletion,omitempty"`
+	// Paused is a flag that indicates if the  is paused.
+	// +kubebuilder:default=false
+	Paused bool `json:"paused,omitempty"`
 }
 
 type NatsOperatorStatus struct {

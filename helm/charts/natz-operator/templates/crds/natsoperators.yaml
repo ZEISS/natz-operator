@@ -41,6 +41,15 @@ spec:
                 description: EnableSystemAccount is a flag that indicates if the system
                   account should be created.
                 type: boolean
+              paused:
+                default: false
+                description: Paused is a flag that indicates if the  is paused.
+                type: boolean
+              prevent_deletion:
+                default: false
+                description: PreventDeletion is a flag that indicates if the  should
+                  be locked to prevent deletion.
+                type: boolean
               privateKey:
                 description: PrivateKey is a reference to a secret that contains the
                   private key

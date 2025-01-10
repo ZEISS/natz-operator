@@ -74,12 +74,30 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return r.reconcileDelete(ctx, operator)
 	}
 
+	if operator.Spec.Paused {
+		return r.reconcilePaused(ctx, operator)
+	}
+
 	err := r.reconcileResources(ctx, operator)
 	if err != nil {
 		return r.ManageError(ctx, operator, err)
 	}
 
 	return r.ManageSuccess(ctx, operator)
+}
+
+func (r *NatsOperatorReconciler) reconcilePaused(ctx context.Context, sk *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
+	if sk.Status.ControlPaused {
+		return ctrl.Result{}, nil
+	}
+
+	if sk.Spec.Paused {
+		sk.Status.ControlPaused = true
+
+		return ctrl.Result{}, r.Status().Update(ctx, sk)
+	}
+
+	return ctrl.Result{}, nil
 }
 
 func (r *NatsOperatorReconciler) reconcileResources(ctx context.Context, operator *natsv1alpha1.NatsOperator) error {
@@ -206,6 +224,11 @@ func (r *NatsOperatorReconciler) ManageSuccess(ctx context.Context, obj *natsv1a
 	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonOperatorSynchronized), "operator synchronized")
 
 	return ctrl.Result{}, nil
+}
+
+// IsControlPaused ...
+func (r *NatsOperatorReconciler) IsControlPaused(obj *natsv1alpha1.NatsOperator) bool {
+	return obj.Status.ControlPaused
 }
 
 // SetupWithManager sets up the controller with the Manager.

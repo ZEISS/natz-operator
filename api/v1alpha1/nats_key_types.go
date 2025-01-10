@@ -52,6 +52,7 @@ type NatsKeySpec struct {
 	// Type is the type of the N.
 	Type KeyType `json:"type"`
 	// PreventDeletion is a flag that indicates if the  should be locked to prevent deletion.
+	// +kubebuilder:default=false
 	PreventDeletion bool `json:"prevent_deletion,omitempty"`
 	// Paused is a flag that indicates if the  is paused.
 	// +kubebuilder:default=false
@@ -101,6 +102,11 @@ func (pk *NatsKey) Keys() (nkeys.KeyPair, error) {
 	}
 
 	return s, err
+}
+
+// IsPaused returns true if the private  is paused.
+func (pk *NatsKey) IsPaused() bool {
+	return pk.Spec.Paused
 }
 
 //+kubebuilder:object:root=true
