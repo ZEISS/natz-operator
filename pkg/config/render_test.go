@@ -17,7 +17,7 @@ func TestNewWriter(t *testing.T) {
 func TestConfiguration(t *testing.T) {
 	t.Parallel()
 
-	cfg := &config.Configuration{
+	cfg := &config.Property{
 		Block: &config.Block_Object{},
 	}
 	require.NotNil(t, cfg)

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/zeiss/natz-operator/controllers"
+	"github.com/zeiss/natz-operator/api/v1alpha1"
 	"github.com/zeiss/pkg/conv"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -39,7 +39,7 @@ func runCreds(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Println(conv.String(secret.Data[controllers.USER_CREDS]))
+	fmt.Println(conv.String(secret.Data[v1alpha1.SecretUserCredsKey]))
 
 	return nil
 }

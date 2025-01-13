@@ -18,6 +18,7 @@ import (
 
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
+	"github.com/zeiss/natz-operator/api/v1alpha1"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
 	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/conv"
@@ -62,7 +63,6 @@ func NewNatsUserReconciler(mgr ctrl.Manager) *NatsUserReconciler {
 //+kubebuilder:rbac:groups=natz.zeiss.com,resources=natsusers/finalizers,verbs=update
 
 // Reconcile ...
-// nolint:gocyclo
 func (r *NatsUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	user := &natsv1alpha1.NatsUser{}
 	if err := r.Get(ctx, req.NamespacedName, user); err != nil {
@@ -141,8 +141,8 @@ func (r *NatsUserReconciler) reconcileCredentials(ctx context.Context, user *nat
 	secret.Namespace = user.Namespace
 	secret.Type = natsv1alpha1.SecretUserCredentialsName
 	secret.Data = map[string][]byte{
-		"user.jwt":   []byte(user.Status.JWT),
-		"user.creds": []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, user.Status.JWT, privateKey.Data[OPERATOR_SEED_KEY])),
+		v1alpha1.SecretUserJWTKey:   []byte(user.Status.JWT),
+		v1alpha1.SecretUserCredsKey: []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, user.Status.JWT, privateKey.Data[OPERATOR_SEED_KEY])),
 	}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {

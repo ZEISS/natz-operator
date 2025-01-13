@@ -5,6 +5,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// SecretUserJWTKey is the key for the JWT in the secret
+	SecretUserJWTKey = "user.jwt"
+	// SecretUserCredsKey is the key for the credentials in the secret
+	SecretUserCredsKey = "user.creds"
+)
+
 type UserPhase string
 
 const (
