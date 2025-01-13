@@ -13,3 +13,16 @@ func TestNewWriter(t *testing.T) {
 	cfg := config.New()
 	require.NotNil(t, cfg)
 }
+
+func TestConfiguration(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Configuration{
+		Block: &config.Block_Object{},
+	}
+	require.NotNil(t, cfg)
+
+	require.NotNil(t, cfg.GetBlock())
+	require.Equal(t, cfg.Block, cfg.GetBlock())
+	require.Equal(t, &config.Block_Object{}, cfg.GetBlock())
+}
