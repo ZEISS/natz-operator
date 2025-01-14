@@ -19,7 +19,7 @@ func TestMarshal(t *testing.T) {
 		{
 			name:     "empty config",
 			cfg:      config.Config{},
-			expected: []byte(`{ host: "" }`),
+			expected: []byte(`{""}`),
 		},
 	}
 

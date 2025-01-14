@@ -413,9 +413,13 @@ func stringEncoder(e *Encoder, v reflect.Value) {
 		}
 		b := e.AvailableBuffer()
 		b = append(b, numStr...)
+
 		e.Write(b)
+
 		return
 	}
+
+	fmt.Println(v.String())
 
 	e.Write(appendString(e.AvailableBuffer(), v.String()))
 }
