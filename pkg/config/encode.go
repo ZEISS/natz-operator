@@ -18,8 +18,6 @@ const (
 	DefaultLineLen = 70
 )
 
-const hex = "0123456789abcdef"
-
 // A Number represents a JSON number literal.
 type Number string
 
@@ -59,6 +57,7 @@ func NewEncoder() *Encoder {
 	}
 }
 
+// nolint:unparam
 func (e *Encoder) marshal(v interface{}) error {
 	e.reflectValue(reflect.ValueOf(v))
 
@@ -84,7 +83,7 @@ func valueEncoder(v reflect.Value) encoderFunc {
 }
 
 func typeEncoder(t reflect.Type) encoderFunc {
-	return newTypeEncoder(t, true)
+	return newTypeEncoder(t)
 }
 
 type isZeroer interface {
@@ -93,7 +92,8 @@ type isZeroer interface {
 
 var isZeroerType = reflect.TypeFor[isZeroer]()
 
-func newTypeEncoder(t reflect.Type, allowAddr bool) encoderFunc {
+func newTypeEncoder(t reflect.Type) encoderFunc {
+	// nolint:exhaustive
 	switch t.Kind() {
 	case reflect.Bool:
 		return boolEncoder
@@ -179,7 +179,8 @@ type structFields struct {
 	byFoldedName map[string]*field
 }
 
-func typeField(t reflect.Type, index []int) structFields {
+// nolint:gocyclo
+func typeField(t reflect.Type) structFields {
 	// Anonymous fields to explore at the current level and the next.
 	current := []field{}
 	next := []field{{typ: t}}
@@ -246,6 +247,7 @@ func typeField(t reflect.Type, index []int) structFields {
 				// Only strings, floats, integers, and booleans can be quoted.
 				quoted := false
 				if opts.Contains("string") {
+					// nolint:exhaustive
 					switch ft.Kind() {
 					case reflect.Bool,
 						reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
@@ -488,6 +490,7 @@ func appendString[Bytes []byte | string](dst []byte, src Bytes) []byte {
 	return dst
 }
 
+// nolint:gocyclo
 func isValidNumber(s string) bool {
 	// This function implements the JSON numbers grammar.
 	// See https://tools.ietf.org/html/rfc7159#section-6
@@ -548,7 +551,7 @@ func isValidNumber(s string) bool {
 }
 
 func newStructEncoder(t reflect.Type) encoderFunc {
-	se := structEncoder{fields: typeField(t, nil)}
+	se := structEncoder{fields: typeField(t)}
 	return se.encode
 }
 
