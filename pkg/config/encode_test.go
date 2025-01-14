@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,14 @@ func TestMarshal(t *testing.T) {
 		{
 			name:     "empty config",
 			cfg:      config.Config{},
-			expected: []byte(`{""}`),
+			expected: []byte(`{host:""}`),
+		},
+		{
+			name: "config with Host",
+			cfg: config.Config{
+				Host: "nats://localhost:4222",
+			},
+			expected: []byte(`{host:"nats://localhost:4222"}`),
 		},
 	}
 
@@ -27,7 +33,6 @@ func TestMarshal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			b, err := config.Marshal(tt.cfg)
 			require.NoError(t, err)
-			fmt.Println(string(b), tt.expected)
 			require.Equal(t, tt.expected, b)
 		})
 	}
