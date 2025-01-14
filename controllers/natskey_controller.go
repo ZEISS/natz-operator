@@ -117,7 +117,6 @@ func (r *NatsPrivateKeyReconciler) reconcileStatus(ctx context.Context, sk *nats
 
 	if sk.Status.Phase != phase {
 		sk.Status.Phase = phase
-
 		return r.Status().Update(ctx, sk)
 	}
 

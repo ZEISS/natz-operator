@@ -93,7 +93,6 @@ func (r *NatsOperatorReconciler) reconcilePaused(ctx context.Context, sk *natsv1
 
 	if sk.Spec.Paused {
 		sk.Status.ControlPaused = true
-
 		return ctrl.Result{}, r.Status().Update(ctx, sk)
 	}
 

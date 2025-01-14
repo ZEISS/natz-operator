@@ -4,11 +4,6 @@ import "io"
 
 var _ io.Writer = (*writer)(nil)
 
-const (
-	DefaulTabSize  = 4
-	DefaultLineLen = 70
-)
-
 // Opt is a functional option for the writer.
 type Opt func(*writer)
 
