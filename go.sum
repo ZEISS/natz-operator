@@ -150,6 +150,8 @@ github.com/zeiss/pkg v0.1.20-0.20250114103111-fbac01f56c8f h1:OzJZcToH33IYoFIAzM
 github.com/zeiss/pkg v0.1.20-0.20250114103111-fbac01f56c8f/go.mod h1:/pxD3uuEHcy3lF7LivVVcswk4EZWksvTwO6tIbJS9JE=
 github.com/zeiss/pkg v0.1.20-0.20250114114635-cd00cf0f99a2 h1:71/RL2+q9EfugVQIzz7euT4H4iL6cTYTCRNCZftf04k=
 github.com/zeiss/pkg v0.1.20-0.20250114114635-cd00cf0f99a2/go.mod h1:/pxD3uuEHcy3lF7LivVVcswk4EZWksvTwO6tIbJS9JE=
+github.com/zeiss/pkg v0.1.20-0.20250115223310-7cb23db81989 h1:za979DzymYyHm0uQHsLu9M86L3KhRFeK90CaQjRKoyg=
+github.com/zeiss/pkg v0.1.20-0.20250115223310-7cb23db81989/go.mod h1:/pxD3uuEHcy3lF7LivVVcswk4EZWksvTwO6tIbJS9JE=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=

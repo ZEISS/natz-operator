@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/zeiss/pkg/reflectx"
-	"github.com/zeiss/pkg/utilx"
 )
 
 const (
@@ -234,6 +233,7 @@ func typeField(t reflect.Type) structFields {
 				if !reflectx.IsValidTag(name) {
 					name = ""
 				}
+
 				index := make([]int, len(f.index)+1)
 				copy(index, f.index)
 				index[len(f.index)] = i
@@ -264,6 +264,7 @@ func typeField(t reflect.Type) structFields {
 					if name == "" {
 						name = sf.Name
 					}
+
 					field := field{
 						name:      name,
 						tag:       tagged,
@@ -573,7 +574,7 @@ FieldLoop:
 			fv = fv.Field(i)
 		}
 
-		if f.omitEmpty && utilx.Empty(fv) {
+		if f.omitEmpty && reflectx.IsEmptyValue(fv) {
 			continue
 		}
 		e.WriteByte(next)
