@@ -96,10 +96,10 @@ func newTypeEncoder(t reflect.Type) encoderFunc {
 	switch t.Kind() {
 	case reflect.Bool:
 		return boolEncoder
-	// case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-	// 	return intEncoder
-	// case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-	// 	return uintEncoder
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return intEncoder
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return uintEncoder
 	// case reflect.Float32, reflect.Float64:
 	// 	return floatEncoder
 	case reflect.String:
@@ -170,6 +170,18 @@ type field struct {
 	quoted    bool
 
 	encoder encoderFunc
+}
+
+func intEncoder(e *Encoder, v reflect.Value) {
+	b := e.AvailableBuffer()
+	b = strconv.AppendInt(b, v.Int(), 10)
+	e.Write(b)
+}
+
+func uintEncoder(e *Encoder, v reflect.Value) {
+	b := e.AvailableBuffer()
+	b = strconv.AppendUint(b, v.Uint(), 10)
+	e.Write(b)
 }
 
 type structFields struct {

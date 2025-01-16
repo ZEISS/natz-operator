@@ -21,11 +21,18 @@ func TestMarshal(t *testing.T) {
 			expected: []byte(`{}`),
 		},
 		{
-			name: "config with Host",
+			name: "config string",
 			cfg: config.Config{
 				Host: "nats://localhost:4222",
 			},
 			expected: []byte(`{host:"nats://localhost:4222"}`),
+		},
+		{
+			name: "config with int",
+			cfg: config.Config{
+				Port: 4222,
+			},
+			expected: []byte(`{port:4222}`),
 		},
 	}
 
