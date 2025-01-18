@@ -569,7 +569,7 @@ func newStructEncoder(t reflect.Type) encoderFunc {
 }
 
 func (se structEncoder) encode(e *Encoder, v reflect.Value) {
-	next := byte('{')
+	next := "{"
 FieldLoop:
 	for i := range se.fields.list {
 		f := &se.fields.list[i]
@@ -589,15 +589,15 @@ FieldLoop:
 		if f.omitEmpty && reflectx.IsEmptyValue(fv) {
 			continue
 		}
-		e.WriteByte(next)
-		next = ','
+		e.WriteString(next)
+		next = "\n"
 
 		e.WriteString(f.name + `:`)
 
 		f.encoder(e, fv)
 	}
 
-	if next == '{' {
+	if next == "{" {
 		e.WriteString("{}")
 	} else {
 		e.WriteByte('}')

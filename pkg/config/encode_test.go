@@ -34,6 +34,15 @@ func TestMarshal(t *testing.T) {
 			},
 			expected: []byte(`{port:4222}`),
 		},
+		{
+			name: "config with struct in struct",
+			cfg: config.Config{
+				Gateway: config.Gateway{
+					Name: "gateway",
+				},
+			},
+			expected: []byte(`{gateway:{name:"gateway"}}`),
+		},
 	}
 
 	for _, tt := range tests {
