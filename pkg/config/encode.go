@@ -432,7 +432,7 @@ func stringEncoder(e *Encoder, v reflect.Value) {
 }
 
 func appendString[Bytes []byte | string](dst []byte, src Bytes) []byte {
-	dst = append(dst, '"')
+	dst = append(dst, ' ')
 	start := 0
 	// for i := 0; i < len(src); {
 	// 	if b := src[i]; b < utf8.RuneSelf {
@@ -498,7 +498,6 @@ func appendString[Bytes []byte | string](dst []byte, src Bytes) []byte {
 	// }
 
 	dst = append(dst, src[start:]...)
-	dst = append(dst, '"')
 
 	return dst
 }
@@ -598,7 +597,7 @@ FieldLoop:
 	}
 
 	if next == "{" {
-		e.WriteString("{}")
+		e.WriteString("")
 	} else {
 		e.WriteByte('}')
 	}
