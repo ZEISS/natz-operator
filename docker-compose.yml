@@ -1,0 +1,22 @@
+services:
+
+  server:
+    image: docker.io/nats:latest
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - server:/data
+    configs:
+      - source: sys.conf
+        target: /examples/sys.conf
+    command:
+      - '-c'
+      - '/examples/sys.conf'
+
+configs:
+  sys.conf:
+    file: './examples/sys.conf'
+
+volumes:
+  server:

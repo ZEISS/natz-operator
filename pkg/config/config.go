@@ -1,18 +1,39 @@
 package config
 
+import (
+	"encoding/json"
+
+	"github.com/zeiss/pkg/cast"
+)
+
 // New returns a new Config object.
 func New() *Config {
 	return &Config{}
 }
 
+// Default ...
+func Default() *Config {
+	return &Config{
+		Host: cast.Ptr("0.0.0.0"),
+		Port: cast.Ptr(4222),
+	}
+}
+
 // Config ...
 type Config struct {
 	// Host ...
-	Host string `json:"host,omitempty"`
+	Host *string `json:"host,omitempty"`
 	// Port ...
 	Port *int `json:"port,omitempty"`
+	// HTTPPort ...
+	HTTPPort *int `json:"http_port,omitempty"`
 	// Gateway ...
 	Gateway *Gateway `json:"gateway,omitempty"`
+}
+
+// Marshal ...
+func (c *Config) Marshal() ([]byte, error) {
+	return json.Marshal(c)
 }
 
 // Gateway ...
@@ -54,11 +75,6 @@ type AuthCallout struct {
 	Account string `json:"account"`
 	// XKey ...
 	XKey string `json:"xkey"`
-}
-
-// Marhshal ...
-func (c *Config) Marshal() ([]byte, error) {
-	return nil, nil
 }
 
 // Property ...
