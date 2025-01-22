@@ -110,12 +110,12 @@ func (c *Config) Marshal() ([]byte, error) {
 // Unmarshal ...
 func (c *Config) Unmarshal(data []byte) error {
 	cfg := struct {
-		Host            *string `json:"host,omitempty"`
-		Port            *int    `json:"port,omitempty"`
-		HTTPPort        *int    `json:"http_port,omitempty"`
-		Gateway         *Gateway
-		ClientAdvertise *string `json:"client_advertise,omitempty"`
-		TLS             *TLS    `json:"tls,omitempty"`
+		Host            *string  `json:"host,omitempty"`
+		Port            *int     `json:"port,omitempty"`
+		HTTPPort        *int     `json:"http_port,omitempty"`
+		Gateway         *Gateway `json:"gateway,omitempty"`
+		ClientAdvertise *string  `json:"client_advertise,omitempty"`
+		TLS             *TLS     `json:"tls,omitempty"`
 	}{}
 
 	if err := json.Unmarshal(data, &cfg); err != nil {
