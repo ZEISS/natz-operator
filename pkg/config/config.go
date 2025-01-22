@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 
+	"github.com/pkg/errors"
 	"github.com/zeiss/pkg/cast"
 )
 
@@ -106,6 +107,31 @@ func (c *Config) Marshal() ([]byte, error) {
 	return json.Marshal(c)
 }
 
+// Unmarshal ...
+func (c *Config) Unmarshal(data []byte) error {
+	cfg := struct {
+		Host            *string `json:"host,omitempty"`
+		Port            *int    `json:"port,omitempty"`
+		HTTPPort        *int    `json:"http_port,omitempty"`
+		Gateway         *Gateway
+		ClientAdvertise *string `json:"client_advertise,omitempty"`
+		TLS             *TLS    `json:"tls,omitempty"`
+	}{}
+
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return errors.WithStack(err)
+	}
+
+	c.Host = cfg.Host
+	c.Port = cfg.Port
+	c.HTTPPort = cfg.HTTPPort
+	c.Gateway = cfg.Gateway
+	c.ClientAdvertise = cfg.ClientAdvertise
+	c.TLS = cfg.TLS
+
+	return nil
+}
+
 // Gateway ...
 type Gateway struct {
 	// Name ...
@@ -124,6 +150,17 @@ type Gateway struct {
 	Advertise *string `json:"advertise,omitempty"`
 	// ConnectTimeout ...
 	ConnectRetries *int `json:"connect_retries,omitempty"`
+	// Gateways ...
+}
+
+// GatewayEntry ...
+type GatewayEntry struct {
+	// Name ...
+	Name string `json:"name"`
+	// URLS ...
+	URLS []string `json:"urls"`
+	// TLS ...
+	TLS *TLS `json:"tls,omitempty"`
 }
 
 // Authorization ...
