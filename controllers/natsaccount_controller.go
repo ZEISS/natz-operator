@@ -36,6 +36,9 @@ const (
 const (
 	EventReasonAccountSecretCreateSucceeded EventReason = "AccountSecretCreateSucceeded"
 	EventReasonAccountSecretCreateFailed    EventReason = "AccountSecretCreateFailed"
+	EventReasonAccountAccessGranted         EventReason = "AccountAccessGranted"
+	EventReasonAccountAccessDeleted         EventReason = "AccountAccessDeleted"
+	EventReasonAccountAccessFailed          EventReason = "AccountAccessFailed"
 )
 
 // NatsAccountReconciler ...
