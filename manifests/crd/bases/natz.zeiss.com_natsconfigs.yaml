@@ -38,6 +38,131 @@ spec:
           spec:
             description: NatsConfigSpec defines the desired state of NatsConfig
             properties:
+              config:
+                description: Template is the configuration template.
+                properties:
+                  client_advertise:
+                    description: ClientAdvertise ...
+                    type: string
+                  gateway:
+                    description: Gateway ...
+                    properties:
+                      advertise:
+                        description: Advertise ...
+                        type: string
+                      authorization:
+                        description: Authorization ...
+                        properties:
+                          auth_callout:
+                            description: AuthCallout ...
+                            properties:
+                              account:
+                                description: Account ...
+                                type: string
+                              auth_users:
+                                description: AuthUsers ...
+                                items:
+                                  type: string
+                                type: array
+                              issuer:
+                                description: Issuer ...
+                                type: string
+                              xkey:
+                                description: XKey ...
+                                type: string
+                            required:
+                            - account
+                            - auth_users
+                            - issuer
+                            - xkey
+                            type: object
+                          password:
+                            type: string
+                          timeout:
+                            type: integer
+                          token:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      connect_retries:
+                        description: ConnectTimeout ...
+                        type: integer
+                      host:
+                        description: Host ...
+                        type: string
+                      listen:
+                        description: Listen ...
+                        type: string
+                      name:
+                        description: Name ...
+                        type: string
+                      port:
+                        description: Port ...
+                        type: integer
+                      reject_unknown_cluster:
+                        description: RejectUnknownCluster ...
+                        type: boolean
+                    required:
+                    - name
+                    type: object
+                  host:
+                    description: Host ...
+                    type: string
+                  http_port:
+                    description: HTTPPort ...
+                    type: integer
+                  port:
+                    description: Port ...
+                    type: integer
+                  tls:
+                    description: TLS ...
+                    properties:
+                      ca_file:
+                        description: CAFile ...
+                        type: string
+                      cert_file:
+                        description: CertFile ...
+                        type: string
+                      cipher_suites:
+                        description: CipherSuites ...
+                        type: string
+                      connection_rate_limit:
+                        description: ConnectionRateLimit ...
+                        type: integer
+                      curve_preferences:
+                        description: CurvePreferences ...
+                        type: string
+                      insecure:
+                        description: Insecure ...
+                        type: boolean
+                      key_file:
+                        description: KeyFile ...
+                        type: string
+                      pinned_certs:
+                        description: PinnedCerts ...
+                        items:
+                          type: string
+                        type: array
+                      verify:
+                        description: Verify ...
+                        type: boolean
+                      verify_and_map:
+                        description: VerifyAndMap ...
+                        type: boolean
+                      verify_cert_and_check_known_urls:
+                        description: VerifyCertAndCheckKnownURLs ...
+                        type: boolean
+                    required:
+                    - ca_file
+                    - cert_file
+                    - cipher_suites
+                    - key_file
+                    - pinned_certs
+                    - verify
+                    - verify_and_map
+                    type: object
+                type: object
               gateways:
                 description: Gateways is a list of gateways that should be configured.
                 items:
