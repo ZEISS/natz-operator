@@ -7,3 +7,6 @@ spec:
     name: natsoperator-sample
   systemAccountRef:
     name: natsoperator-system
+  gateways:
+    - name: harry
+      namespace: default

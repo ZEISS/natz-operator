@@ -1,10 +1,9 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"math"
-	"text/template"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -28,57 +27,6 @@ const (
 	EventReasonConfigSynchronizeFailed EventReason = "ConfigSynchronizeFailed"
 	EventReasonConfigSynchronized      EventReason = "configSynchronized"
 )
-
-type Template struct {
-	OperatorJWT            string
-	OperatorPublicKey      string
-	SystemAccountPublicKey string
-	SystemAccountJWT       string
-	SigningKey             string
-	Gateway                TemplateGateway
-}
-
-// HasGateways ...
-func (t *Template) HasGateways() bool {
-	return slices.Len(t.Gateway.Gateways) > 0
-}
-
-type TemplateGateway struct {
-	User     string
-	Password string
-	Gateways []struct {
-		Name string
-		URL  string
-	}
-}
-
-const authConfigTpl = `operator: {{ .OperatorJWT }}
-system_account: {{ .SystemAccountPublicKey }}
-resolver {
-	type: full
-	dir: './jwt'
-	allow_delete: true
-	interval: "2m"
-	timeout: "5s"
-}
-resolver_preload: {
-	{{ .SystemAccountPublicKey }}: {{ .SystemAccountJWT }},
-}
-{{ if hasGateways }}
-gateway: {
-  authorization {
-    user: {{ .Gateway.User }}
-    password: {{ .Gateway.Password }}
-  }
-
-  gateways: [
-    {{- range .Gateway.Gateways }}
-    { name: {{ .Name }}, url: {{ .URL }} },
-    {{- end }}
-  ]
-}
-{{end}}
-`
 
 // NatsConfigReconciler reconciles a Natsconfig object
 type NatsConfigReconciler struct {
@@ -146,21 +94,11 @@ func (r *NatsConfigReconciler) reconcileResources(ctx context.Context, config *n
 	return r.ManageSuccess(ctx, config)
 }
 
-func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, config *natsv1alpha1.NatsConfig) error {
-	cfg := &corev1.ConfigMap{}
-	cfgName := client.ObjectKey{
-		Namespace: config.Namespace,
-		Name:      config.Name,
-	}
-
-	if err := r.Get(ctx, cfgName, cfg); !errors.IsNotFound(err) {
-		return err
-	}
-
+func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1alpha1.NatsConfig) error {
 	operator := &natsv1alpha1.NatsOperator{}
 	operatorName := client.ObjectKey{
-		Namespace: config.Namespace,
-		Name:      config.Spec.OperatorRef.Name,
+		Namespace: obj.Namespace,
+		Name:      obj.Spec.OperatorRef.Name,
 	}
 
 	if err := r.Get(ctx, operatorName, operator); err != nil {
@@ -169,44 +107,41 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, config *nats
 
 	systemAccount := &natsv1alpha1.NatsAccount{}
 	systemAccountName := client.ObjectKey{
-		Namespace: config.Namespace,
-		Name:      config.Spec.SystemAccountRef.Name,
+		Namespace: obj.Namespace,
+		Name:      obj.Spec.SystemAccountRef.Name,
 	}
 
 	if err := r.Get(ctx, systemAccountName, systemAccount); err != nil {
 		return err
 	}
 
-	tpl := Template{
-		OperatorJWT:            operator.Status.JWT,
-		OperatorPublicKey:      operator.Status.PublicKey,
-		SystemAccountPublicKey: systemAccount.Status.PublicKey,
-		SystemAccountJWT:       systemAccount.Status.JWT,
+	// create a new config
+	config := natsv1alpha1.Config{}
+
+	for _, gateway := range obj.Spec.Gateways {
+		gw := natsv1alpha1.GatewayEntry{
+			Name: gateway.Name,
+			URLS: []string{},
+		}
+
+		config.Gateway.Gateways = append(config.Gateway.Gateways, gw)
 	}
 
-	tmpl, err := template.New("auth.conf").Funcs(template.FuncMap{
-		"hasGateways": tpl.HasGateways,
-	}).Parse(authConfigTpl)
+	b, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
 
-	var b bytes.Buffer
-
-	err = tmpl.Execute(&b, tpl)
-	if err != nil {
-		return err
+	c := &corev1.Secret{}
+	c.Namespace = obj.Namespace
+	c.Name = obj.Name
+	c.Data = map[string][]byte{
+		"config.conf": b,
 	}
 
-	cfg.Namespace = config.Namespace
-	cfg.Name = config.Name
-	cfg.Data = map[string]string{
-		"auth.conf": b.String(),
-	}
-
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, cfg, func() error {
-		if !controllerutil.HasControllerReference(cfg) {
-			if err := controllerutil.SetControllerReference(config, cfg, r.Scheme); err != nil {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, c, func() error {
+		if !controllerutil.HasControllerReference(c) {
+			if err := controllerutil.SetControllerReference(obj, c, r.Scheme); err != nil {
 				return err
 			}
 		}
