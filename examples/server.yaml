@@ -1,0 +1,11 @@
+statefulSet:
+  patch:
+    - op: remove
+      path: /spec/template/spec/volumes/0
+    - op: add
+      path: /spec/template/spec/volumes/-
+      value:
+        name: config
+        secret:
+          defaultMode: 420
+          secretName: nats-default-config

@@ -8,7 +8,7 @@ type ConfigPhase string
 
 const (
 	// SecretConfigKey is the key for the config in the secret
-	SecretConfigKey = "config.json"
+	SecretConfigKey = "nats.conf"
 )
 
 // New returns a new Config object.
