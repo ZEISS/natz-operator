@@ -115,8 +115,7 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 		return err
 	}
 
-	// create a new config
-	config := natsv1alpha1.Config{}
+	config := obj.Spec.Config
 
 	for _, gateway := range obj.Spec.Gateways {
 		gw := natsv1alpha1.GatewayEntry{

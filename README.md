@@ -144,10 +144,20 @@ spec:
     name: natsoperator-sample
   systemAccountRef:
     name: natsoperator-system
+  config:
+    host: 0.0.0.0
+    port: 4222
+  gateways:
+    - name: harry
+      namespace: default
 ```
 
-This creates a new `ConfigMap` with the NATS configuration.
+This creates a new `Secret` with the NATS configuration. 
 This configuration can be merged with the NATS operator configuration.
+
+Gateways are dynamically configured using the `NatsGateway` resources in the `gateways` property.
+
+There are dynamic 
 
 ## Gateways
 

@@ -162,8 +162,8 @@ type NatsConfigSpec struct {
 	SystemAccountRef NatsAccountReference `json:"systemAccountRef"`
 	// Gateways is a list of gateways that should be configured.
 	Gateways []NatsgatewayReference `json:"gateways,omitempty"`
-	// Template is the configuration template.
-	Template Config `json:"config,omitempty"`
+	// Config is the configuration that should be applied.
+	Config Config `json:"config,omitempty"`
 }
 
 // NatsConfigStatus defines the observed state of NatsConfig
