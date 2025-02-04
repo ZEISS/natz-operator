@@ -6,6 +6,11 @@ import (
 
 type ConfigPhase string
 
+const (
+	// SecretConfigKey is the key for the config in the secret
+	SecretConfigKey = "config.json"
+)
+
 // New returns a new Config object.
 func New() Config {
 	return Config{}
