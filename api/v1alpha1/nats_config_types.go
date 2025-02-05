@@ -8,8 +8,8 @@ import (
 type ConfigPhase string
 
 const (
-	// SecretConfigKey is the key for the config in the secret
-	SecretConfigKey = "nats.conf"
+	// SecretConfigDataKey is the key for the config in the secret
+	SecretConfigDataKey = "nats.conf"
 )
 
 // New returns a new Config object.

@@ -56,6 +56,7 @@ func (os OperationPhase) Failed() bool {
 const (
 	SecretNameKey             = "natz.zeiss.com/nats-key"
 	SecretUserCredentialsName = "natz.zeiss.com/nats-user-credentials"
+	SecretConfigKey           = "natz.zeiss.com/nats-config"
 )
 
 // SecretValueFromSource represents the source of a secret value

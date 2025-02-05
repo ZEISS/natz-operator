@@ -155,8 +155,9 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 	c := &corev1.Secret{}
 	c.Namespace = obj.Namespace
 	c.Name = obj.Name
+	c.Type = natsv1alpha1.SecretConfigKey
 	c.Data = map[string][]byte{
-		natsv1alpha1.SecretConfigKey: b,
+		natsv1alpha1.SecretConfigDataKey: b,
 	}
 
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, c, func() error {
