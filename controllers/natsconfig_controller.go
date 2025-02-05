@@ -115,6 +115,8 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 		return err
 	}
 
+	// defaultConfig := natsv1alpha1.Default()
+
 	config := obj.Spec.Config
 
 	config.Resolver = &natsv1alpha1.Resolver{
@@ -131,6 +133,19 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 	config.ResolverPreload = natsv1alpha1.ResolverPreload{
 		systemAccount.Status.PublicKey: systemAccount.Status.JWT,
 	}
+
+	// for _, gateway := range obj.Spec.Gateways {
+	// 	gw := natsv1alpha1.GatewayEntry{
+	// 		Name: gateway.Name,
+	// 		URLS: []string{},
+	// 	}
+
+	// 	if utilx.Empty(config.Gateway) {
+	// 		config.Gateway = &natsv1alpha1.Gateway{}
+	// 	}
+
+	// 	config.Gateway.Gateways = append(config.Gateway.Gateways, gw)
+	// }
 
 	b, err := json.Marshal(config)
 	if err != nil {

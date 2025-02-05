@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/zeiss/pkg/utilx"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -12,8 +13,17 @@ const (
 )
 
 // New returns a new Config object.
-func New() Config {
-	return Config{}
+func New() *Config {
+	return &Config{}
+}
+
+// Default returns the default configuration.
+func Default() *Config {
+	cfg := New()
+
+	utilx.SetDefaults(cfg)
+
+	return cfg
 }
 
 // Config ...
