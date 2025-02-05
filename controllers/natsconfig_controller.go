@@ -25,7 +25,7 @@ import (
 
 const (
 	EventReasonConfigSynchronizeFailed EventReason = "ConfigSynchronizeFailed"
-	EventReasonConfigSynchronized      EventReason = "configSynchronized"
+	EventReasonConfigSynchronized      EventReason = "ConfigSynchronized"
 )
 
 // NatsConfigReconciler reconciles a Natsconfig object
@@ -117,13 +117,19 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 
 	config := obj.Spec.Config
 
-	for _, gateway := range obj.Spec.Gateways {
-		gw := natsv1alpha1.GatewayEntry{
-			Name: gateway.Name,
-			URLS: []string{},
-		}
+	config.Resolver = &natsv1alpha1.Resolver{
+		Type:          "full",
+		Dir:           "./jwt",
+		AllowedDelete: true,
+		Interval:      "2m",
+		Timeout:       "5s",
+	}
 
-		config.Gateway.Gateways = append(config.Gateway.Gateways, gw)
+	config.SystemAccount = systemAccount.Status.PublicKey
+	config.Operator = operator.Status.JWT
+
+	config.ResolverPreload = natsv1alpha1.ResolverPreload{
+		systemAccount.Status.PublicKey: systemAccount.Status.JWT,
 	}
 
 	b, err := json.Marshal(config)

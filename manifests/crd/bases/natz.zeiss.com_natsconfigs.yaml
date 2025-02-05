@@ -41,6 +41,41 @@ spec:
               config:
                 description: Config is the configuration that should be applied.
                 properties:
+                  authorization:
+                    description: Authorization ...
+                    properties:
+                      auth_callout:
+                        description: AuthCallout ...
+                        properties:
+                          account:
+                            description: Account ...
+                            type: string
+                          auth_users:
+                            description: AuthUsers ...
+                            items:
+                              type: string
+                            type: array
+                          issuer:
+                            description: Issuer ...
+                            type: string
+                          xkey:
+                            description: XKey ...
+                            type: string
+                        required:
+                        - account
+                        - auth_users
+                        - issuer
+                        - xkey
+                        type: object
+                      password:
+                        type: string
+                      timeout:
+                        type: integer
+                      token:
+                        type: string
+                      user:
+                        type: string
+                    type: object
                   client_advertise:
                     description: ClientAdvertise ...
                     type: string
@@ -177,9 +212,42 @@ spec:
                   http_port:
                     description: HTTPPort ...
                     type: integer
+                  operator:
+                    description: Operator ...
+                    type: string
                   port:
                     description: Port ...
                     type: integer
+                  resolver:
+                    description: Resolver ...
+                    properties:
+                      allowed_delete:
+                        description: AllowedDelete ...
+                        type: boolean
+                      dir:
+                        description: Dir ...
+                        type: string
+                      interval:
+                        description: Interval ...
+                        type: string
+                      limit:
+                        description: Limit ...
+                        type: integer
+                      timeout:
+                        description: Timeout ...
+                        type: string
+                      type:
+                        description: Type ...
+                        type: string
+                    type: object
+                  resolver_preload:
+                    additionalProperties:
+                      type: string
+                    description: ResolverPreload ...
+                    type: object
+                  system_account:
+                    description: SystemAccount ...
+                    type: string
                   tls:
                     description: TLS ...
                     properties:
