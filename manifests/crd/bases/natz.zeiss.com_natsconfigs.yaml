@@ -215,6 +215,9 @@ spec:
                   operator:
                     description: Operator ...
                     type: string
+                  pid_file:
+                    description: PidFile ...
+                    type: string
                   port:
                     description: Port ...
                     type: integer
@@ -239,6 +242,8 @@ spec:
                       type:
                         description: Type ...
                         type: string
+                    required:
+                    - limit
                     type: object
                   resolver_preload:
                     additionalProperties:

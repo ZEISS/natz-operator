@@ -14,7 +14,9 @@ const (
 
 // New returns a new Config object.
 func New() *Config {
-	return &Config{}
+	return &Config{
+		Resolver: Resolver{},
+	}
 }
 
 // Default returns the default configuration.
@@ -43,13 +45,15 @@ type Config struct {
 	// Authorization ...
 	Authorization *Authorization `json:"authorization,omitempty"`
 	// Resolver ...
-	Resolver *Resolver `json:"resolver,omitempty"`
+	Resolver Resolver `json:"resolver,omitempty"`
 	// ResolverPreload ...
 	ResolverPreload ResolverPreload `json:"resolver_preload,omitempty"`
 	// SystemAccount ...
 	SystemAccount string `json:"system_account,omitempty"`
 	// Operator ...
 	Operator string `json:"operator,omitempty"`
+	// PidFile ...
+	PidFile string `json:"pid_file,omitempty" default:"/var/run/nats/nats.pid"`
 }
 
 // Resolver ...
@@ -57,13 +61,13 @@ type Resolver struct {
 	// Type ...
 	Type string `json:"type,omitempty" default:"full"`
 	// Dir ...
-	Dir string `json:"dir,omitempty" default:"./jwt"`
+	Dir string `json:"dir,omitempty" default:"/data/resolver"`
 	// AllowedDelete ...
 	AllowedDelete bool `json:"allowed_delete,omitempty" default:"true"`
 	// Interval ...
 	Interval string `json:"interval,omitempty" default:"2m"`
 	// Limit ...
-	Limit int `json:"limit,omitempty" default:"1000"`
+	Limit int `json:"limit,omitzero"`
 	// Timeout ...
 	Timeout string `json:"timeout,omitempty" default:"5s"`
 }

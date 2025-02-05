@@ -81,11 +81,7 @@ func (in *Config) DeepCopyInto(out *Config) {
 		*out = new(Authorization)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Resolver != nil {
-		in, out := &in.Resolver, &out.Resolver
-		*out = new(Resolver)
-		**out = **in
-	}
+	out.Resolver = in.Resolver
 	if in.ResolverPreload != nil {
 		in, out := &in.ResolverPreload, &out.ResolverPreload
 		*out = make(ResolverPreload, len(*in))

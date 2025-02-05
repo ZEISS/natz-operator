@@ -19,6 +19,7 @@ import (
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
 	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/conv"
+	"github.com/zeiss/pkg/copy"
 	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 )
@@ -115,22 +116,15 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 		return err
 	}
 
-	// defaultConfig := natsv1alpha1.Default()
-
-	config := obj.Spec.Config
-
-	config.Resolver = &natsv1alpha1.Resolver{
-		Type:          "full",
-		Dir:           "./jwt",
-		AllowedDelete: true,
-		Interval:      "2m",
-		Timeout:       "5s",
+	defaultConfig := natsv1alpha1.Default()
+	err := copy.CopyWithOption(&obj.Spec.Config, defaultConfig, copy.WithIgnoreEmpty())
+	if err != nil {
+		return err
 	}
 
-	config.SystemAccount = systemAccount.Status.PublicKey
-	config.Operator = operator.Status.JWT
-
-	config.ResolverPreload = natsv1alpha1.ResolverPreload{
+	defaultConfig.SystemAccount = systemAccount.Status.PublicKey
+	defaultConfig.Operator = operator.Status.JWT
+	defaultConfig.ResolverPreload = natsv1alpha1.ResolverPreload{
 		systemAccount.Status.PublicKey: systemAccount.Status.JWT,
 	}
 
@@ -147,7 +141,7 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 	// 	config.Gateway.Gateways = append(config.Gateway.Gateways, gw)
 	// }
 
-	b, err := json.Marshal(config)
+	b, err := json.Marshal(defaultConfig)
 	if err != nil {
 		return err
 	}
