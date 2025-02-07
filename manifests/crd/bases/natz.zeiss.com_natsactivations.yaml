@@ -50,6 +50,14 @@ spec:
                 required:
                 - name
                 type: object
+              expiry:
+                description: Expiry is the expiry time of the activation.
+                format: date-time
+                type: string
+              start:
+                description: Start is the start time of the activation.
+                format: date-time
+                type: string
               subject:
                 description: Subject is the subject that the activation is for.
                 type: string
@@ -68,6 +76,8 @@ spec:
                 type: object
             required:
             - accountRef
+            - expiry
+            - start
             - subject
             - targetAccountRef
             type: object

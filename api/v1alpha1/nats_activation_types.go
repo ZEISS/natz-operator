@@ -27,6 +27,10 @@ type NatsActivationSpec struct {
 	AccountRef NatsAccountReference `json:"accountRef"`
 	// TargetAccountRef is a reference to the account that the activation is for.
 	TargetAccountRef NatsAccountReference `json:"targetAccountRef"`
+	// Expiry is the expiry time of the activation.
+	Expiry metav1.Time `json:"expiry"`
+	// Start is the start time of the activation.
+	Start metav1.Time `json:"start"`
 	// Subject is the subject that the activation is for.
 	Subject string `json:"subject"`
 }
