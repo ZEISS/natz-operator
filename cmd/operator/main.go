@@ -168,6 +168,11 @@ func setupControllers(mgr ctrl.Manager) error {
 		return err
 	}
 
+	err = controllers.NewNatsActivationReconciler(mgr).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
