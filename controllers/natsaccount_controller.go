@@ -5,6 +5,16 @@ import (
 	"math"
 	"time"
 
+	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
+	"github.com/zeiss/natz-operator/pkg/status"
+
+	"github.com/nats-io/jwt/v2"
+	"github.com/nats-io/nkeys"
+	"github.com/zeiss/pkg/cast"
+	"github.com/zeiss/pkg/conv"
+	"github.com/zeiss/pkg/k8s/finalizers"
+	"github.com/zeiss/pkg/slices"
+	"github.com/zeiss/pkg/utilx"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,16 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"github.com/nats-io/jwt/v2"
-	"github.com/nats-io/nkeys"
-	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
-	"github.com/zeiss/natz-operator/pkg/status"
-	"github.com/zeiss/pkg/cast"
-	"github.com/zeiss/pkg/conv"
-	"github.com/zeiss/pkg/k8s/finalizers"
-	"github.com/zeiss/pkg/slices"
-	"github.com/zeiss/pkg/utilx"
 )
 
 const (
@@ -163,7 +163,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 		return err
 	}
 
-	pkSigner, err := nkeys.FromSeed(pkSecret.Data[OPERATOR_SEED_KEY])
+	pkSigner, err := nkeys.FromSeed(pkSecret.Data[natsv1alpha1.SecretSeedDataKey])
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 		return err
 	}
 
-	signerKp, err := nkeys.FromSeed(skSecret.Data[OPERATOR_SEED_KEY])
+	signerKp, err := nkeys.FromSeed(skSecret.Data[natsv1alpha1.SecretSeedDataKey])
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 			return err
 		}
 
-		skSigner, err := nkeys.FromSeed(sk.Data[OPERATOR_SEED_KEY])
+		skSigner, err := nkeys.FromSeed(sk.Data[natsv1alpha1.SecretSeedDataKey])
 		if err != nil {
 			return err
 		}

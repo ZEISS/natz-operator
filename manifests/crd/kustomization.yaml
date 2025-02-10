@@ -8,6 +8,7 @@ resources:
   - bases/natz.zeiss.com_natsgateways.yaml
   - bases/natz.zeiss.com_natskeys.yaml
   - bases/natz.zeiss.com_natsconfigs.yaml
+  - bases/natz.zeiss.com_natsactivations.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

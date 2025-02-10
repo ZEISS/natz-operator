@@ -157,8 +157,8 @@ func (r *NatsPrivateKeyReconciler) reconcileSecret(ctx context.Context, sk *nats
 	}
 
 	data := map[string][]byte{}
-	data[OPERATOR_SEED_KEY] = seed
-	data[OPERATOR_PUBLIC_KEY] = []byte(public)
+	data[natsv1alpha1.SecretSeedDataKey] = seed
+	data[natsv1alpha1.SecretPublicKeyDataKey] = []byte(public)
 
 	op, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
 		secret.Data = data

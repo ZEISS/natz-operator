@@ -124,6 +124,10 @@ type NatsUserStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
+// +genclient
+// +genclient:nonNamespaced
+// +genreconciler
+
 // NatsUser is the Schema for the natsusers API
 type NatsUser struct {
 	metav1.TypeMeta   `json:",inline"`

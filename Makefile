@@ -52,6 +52,10 @@ deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/c
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(GO_KUSTOMIZE) build manifests/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
+.PHONY: setup
+setup: ## Setup the development environment.
+	$(PWD)/scripts/setup.sh
+
 .PHONY: minikube-push
 minikube-push: ## Push the image to the minikube docker daemon.
 	minikube image rm ${IMG}
@@ -87,3 +91,6 @@ clean: ## Remove previous build.
 .PHONY: help
 help: ## Display this help screen.
 	@grep -E '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+# codegen
+include hack/inc.codegen.mk

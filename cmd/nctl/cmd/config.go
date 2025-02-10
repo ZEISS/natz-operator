@@ -23,6 +23,7 @@ type Config struct {
 	Verbose    bool        `json:"verbose"`
 	Force      bool        `json:"force"`
 	Creds      CredsConfig `json:"creds"`
+	Namespace  string      `json:"namespace"`
 }
 
 // GetKubeConfig returns the path to the kubeconfig file.

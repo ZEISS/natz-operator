@@ -76,6 +76,10 @@ type NatsKeyStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
+// +genclient
+// +genclient:nonNamespaced
+// +genreconciler
+
 // NatsKey is the Schema for a NATS key.
 type NatsKey struct {
 	metav1.TypeMeta   `json:",inline"`

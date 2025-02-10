@@ -4,6 +4,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// SecretSeedDataKey ...
+	SecretSeedDataKey = "seed.nk"
+	// SecretPublicKeyDataKey ...
+	SecretPublicKeyDataKey = "key.pub"
+)
+
 // Phase is a type that represents the current phase of the operator.
 //
 // +enum
@@ -59,6 +66,10 @@ type NatsOperatorStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+
+// +genclient
+// +genclient:nonNamespaced
+// +genreconciler
 
 type NatsOperator struct {
 	metav1.TypeMeta   `json:",inline"`

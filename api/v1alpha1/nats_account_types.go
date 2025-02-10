@@ -139,6 +139,10 @@ type NatsAccountStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
+// +genclient
+// +genclient:nonNamespaced
+// +genreconciler
+
 // NatsAccount is the Schema for the natsaccounts API
 type NatsAccount struct {
 	metav1.TypeMeta   `json:",inline"`

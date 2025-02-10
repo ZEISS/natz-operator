@@ -114,7 +114,7 @@ func (r *NatsOperatorReconciler) reconcileOperator(ctx context.Context, obj *nat
 		return err
 	}
 
-	seed, ok := pk.Data[OPERATOR_SEED_KEY]
+	seed, ok := pk.Data[natsv1alpha1.SecretSeedDataKey]
 	if !ok {
 		return fmt.Errorf("public key not found")
 	}
