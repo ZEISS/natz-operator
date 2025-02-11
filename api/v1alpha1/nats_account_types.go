@@ -136,12 +136,12 @@ type NatsAccountStatus struct {
 	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
 // +genclient
 // +genclient:nonNamespaced
 // +genreconciler
+
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 // NatsAccount is the Schema for the natsaccounts API
 type NatsAccount struct {

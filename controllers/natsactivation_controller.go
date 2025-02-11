@@ -14,6 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/nats-io/jwt/v2"
+	"github.com/nats-io/nkeys"
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
 	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/cast"
@@ -100,6 +102,61 @@ func (r *NatsActivationReconciler) reconcileResources(ctx context.Context, obj *
 	if err := r.reconcileStatus(ctx, obj); err != nil {
 		return err
 	}
+
+	if err := r.reconcileActivation(ctx, obj); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *NatsActivationReconciler) reconcileActivation(ctx context.Context, obj *natsv1alpha1.NatsActivation) error {
+	skAccount := &natsv1alpha1.NatsAccount{}
+	skAccountName := client.ObjectKey{
+		Namespace: obj.Namespace,
+		Name:      obj.Spec.AccountRef.Name,
+	}
+
+	if err := r.Get(ctx, skAccountName, skAccount); err != nil {
+		return err
+	}
+
+	sk := &natsv1alpha1.NatsKey{}
+	skName := client.ObjectKey{
+		Namespace: obj.Namespace,
+		Name:      obj.Spec.SignerKeyRef.Name,
+	}
+
+	if err := r.Get(ctx, skName, sk); err != nil {
+		return err
+	}
+
+	skSecret := &corev1.Secret{}
+	skSecretName := client.ObjectKey{
+		Namespace: sk.Namespace,
+		Name:      sk.Name,
+	}
+
+	if err := r.Get(ctx, skSecretName, skSecret); err != nil {
+		return err
+	}
+
+	signerKp, err := nkeys.FromSeed(skSecret.Data[natsv1alpha1.SecretSeedDataKey])
+	if err != nil {
+		return err
+	}
+
+	token := jwt.NewActivationClaims(obj.Spec.Subject)
+
+	token.Name = obj.Spec.Subject
+	token.ImportSubject = jwt.Subject(obj.Spec.Subject)
+	token.IssuerAccount = skAccount.Status.PublicKey
+
+	t, err := token.Encode(signerKp)
+	if err != nil {
+		return err
+	}
+	obj.Status.JWT = t
 
 	return nil
 }

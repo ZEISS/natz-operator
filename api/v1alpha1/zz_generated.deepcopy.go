@@ -450,6 +450,7 @@ func (in *NatsActivationReference) DeepCopy() *NatsActivationReference {
 func (in *NatsActivationSpec) DeepCopyInto(out *NatsActivationSpec) {
 	*out = *in
 	out.AccountRef = in.AccountRef
+	out.SignerKeyRef = in.SignerKeyRef
 	out.TargetAccountRef = in.TargetAccountRef
 	in.Expiry.DeepCopyInto(&out.Expiry)
 	in.Start.DeepCopyInto(&out.Start)

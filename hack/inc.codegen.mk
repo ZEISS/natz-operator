@@ -11,7 +11,7 @@ API_GROUPS 	:=  v1alpha1
 # generates e.g. "PKG/api/v1alpha1 PKG/api/v1alpha2"
 api-import-paths := $(foreach group,$(API_GROUPS),$(PKG)/api/$(group))
 
-generators 	:= client
+generators 	:= deepcopy client
 
 .PHONY: codegen $(generators)
 codegen: $(generators)

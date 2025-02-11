@@ -121,12 +121,12 @@ type NatsUserStatus struct {
 	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
 // +genclient
 // +genclient:nonNamespaced
 // +genreconciler
+
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 // NatsUser is the Schema for the natsusers API
 type NatsUser struct {

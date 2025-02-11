@@ -73,12 +73,12 @@ type NatsKeyStatus struct {
 	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
 // +genclient
 // +genclient:nonNamespaced
 // +genreconciler
+
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 // NatsKey is the Schema for a NATS key.
 type NatsKey struct {

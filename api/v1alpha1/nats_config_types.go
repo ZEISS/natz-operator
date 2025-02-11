@@ -228,12 +228,12 @@ type NatsConfigStatus struct {
 	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
 // +genclient
 // +genclient:nonNamespaced
 // +genreconciler
+
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 type NatsConfig struct {
 	metav1.TypeMeta   `json:",inline"`

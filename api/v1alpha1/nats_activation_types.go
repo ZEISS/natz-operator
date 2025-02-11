@@ -25,6 +25,8 @@ type NatsActivationReference struct {
 type NatsActivationSpec struct {
 	// AccountRef is a reference to the account that the activation is for.
 	AccountRef NatsAccountReference `json:"accountRef"`
+	// SignerKeyRef is a reference to a secret that contains the account signing key
+	SignerKeyRef NatsKeyReference `json:"signerKeyRef"`
 	// TargetAccountRef is a reference to the account that the activation is for.
 	TargetAccountRef NatsAccountReference `json:"targetAccountRef"`
 	// Expiry is the expiry time of the activation.
@@ -36,6 +38,8 @@ type NatsActivationSpec struct {
 }
 
 type NatsActivationStatus struct {
+	// JWT is the JWT for the user
+	JWT string `json:"jwt,omitempty"`
 	// Conditions is an array of conditions that the operator is currently in.
 	Conditions []metav1.Condition `json:"conditions,omitempty" optional:"true"`
 	// Phase is the current phase of the operator.
@@ -48,11 +52,11 @@ type NatsActivationStatus struct {
 	LastUpdate metav1.Time `json:"lastUpdate,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
 // +genclient
 // +genclient:nonNamespaced
+
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 type NatsActivation struct {
 	metav1.TypeMeta   `json:",inline"`

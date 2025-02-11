@@ -54,6 +54,19 @@ spec:
                 description: Expiry is the expiry time of the activation.
                 format: date-time
                 type: string
+              signerKeyRef:
+                description: SignerKeyRef is a reference to a secret that contains
+                  the account signing key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
               start:
                 description: Start is the start time of the activation.
                 format: date-time
@@ -77,6 +90,7 @@ spec:
             required:
             - accountRef
             - expiry
+            - signerKeyRef
             - start
             - subject
             - targetAccountRef
@@ -145,6 +159,9 @@ spec:
                 description: ControlPaused is a flag that indicates if the operator
                   is paused.
                 type: boolean
+              jwt:
+                description: JWT is the JWT for the user
+                type: string
               lastUpdate:
                 description: LastUpdate is the timestamp of the last update.
                 format: date-time
