@@ -18,7 +18,6 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -36,9 +35,10 @@ type NatsAccountServer struct {
 // NewNatsAccountServer ...
 func NewNatsAccountServer(mgr ctrl.Manager, nc *nats.Conn) *NatsAccountServer {
 	return &NatsAccountServer{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		nc:     nc,
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		nc:       nc,
+		Recorder: mgr.GetEventRecorderFor(EventRecorderLabel),
 	}
 }
 
@@ -54,7 +54,6 @@ func (r *NatsAccountServer) GetJWT(publicKey string) (string, bool) {
 
 // Reconcile ...
 func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
 	account := &natsv1alpha1.NatsAccount{}
 
 	if err := r.Get(ctx, req.NamespacedName, account); err != nil {
@@ -64,8 +63,6 @@ func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		return ctrl.Result{}, err
 	}
-
-	logger.Info("reconciling account", "account", account.Name)
 
 	if account.DeletionTimestamp != nil {
 		return r.reconcileDelete(ctx, account)
@@ -90,10 +87,6 @@ func (r *NatsAccountServer) reconcileAccount(_ context.Context, obj *natsv1alpha
 		return nil
 	}
 
-	if r.IsCreating(obj) {
-		return nil
-	}
-
 	if utilx.And(utilx.NotEmpty(obj.Status.JWT), utilx.NotEmpty(obj.Status.PublicKey)) {
 		r.accounts.Store(obj.Status.PublicKey, obj.Status.JWT)
 
@@ -115,10 +108,6 @@ func (r *NatsAccountServer) IsSynchronized(obj *natsv1alpha1.NatsAccount) bool {
 
 // ManageSuccess ...
 func (r *NatsAccountServer) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
-	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
 	if !r.IsSynchronized(obj) {
 		return ctrl.Result{Requeue: true}, nil
 	}

@@ -53,7 +53,6 @@ func init() {
 	rootCmd.Flags().StringVar(&f.probeAddr, "health-probe-bind-address", ":8085", "health probe")
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(natzv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
