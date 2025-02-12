@@ -12,7 +12,6 @@ type AccountPhase string
 
 const (
 	AccountPhaseNone         AccountPhase = ""
-	AccountPhasePending      AccountPhase = "Pending"
 	AccountPhaseCreating     AccountPhase = "Creating"
 	AccountPhaseSynchronized AccountPhase = "Synchronized"
 	AccountPhaseFailed       AccountPhase = "Failed"

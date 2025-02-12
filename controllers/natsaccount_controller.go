@@ -10,18 +10,16 @@ import (
 
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
-	"github.com/zeiss/pkg/cast"
 	"github.com/zeiss/pkg/conv"
-	"github.com/zeiss/pkg/k8s/finalizers"
 	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -84,32 +82,18 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	err := r.reconcileResources(ctx, account)
 	if err != nil {
-		r.Recorder.Event(account, corev1.EventTypeWarning, cast.String(EventReasonAccountSychronizedFailed), "account resources reconciliation failed")
 		return r.ManageError(ctx, account, err)
 	}
 
 	return r.ManageSuccess(ctx, account)
 }
 
-func (r *NatsAccountReconciler) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
-	if finalizers.HasFinalizer(obj, natsv1alpha1.FinalizerName) {
-		obj.SetFinalizers(finalizers.RemoveFinalizer(obj, natsv1alpha1.FinalizerName))
-
-		err := r.Update(ctx, obj)
-		if err != nil && !errors.IsNotFound(err) {
-			return ctrl.Result{}, err
-		}
-	}
-
-	// Delete
+func (r *NatsAccountReconciler) reconcileDelete(_ context.Context, _ *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
+	// Delete, noop
 	return ctrl.Result{}, nil
 }
 
 func (r *NatsAccountReconciler) reconcileResources(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
-	if err := r.reconcileStatus(ctx, account); err != nil {
-		return err
-	}
-
 	if err := r.reconcileAccount(ctx, account); err != nil {
 		return err
 	}
@@ -125,7 +109,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 		Name:      account.Spec.SignerKeyRef.Name,
 	}
 
-	if err := r.Get(ctx, skName, sk); errors.IsNotFound(err) {
+	if err := r.Get(ctx, skName, sk); err != nil {
 		return err
 	}
 
@@ -155,7 +139,7 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 		Name:      pk.Name,
 	}
 
-	if err := r.Get(ctx, pkSecretName, pkSecret); errors.IsNotFound(err) {
+	if err := r.Get(ctx, pkSecretName, pkSecret); err != nil {
 		return err
 	}
 
@@ -209,26 +193,6 @@ func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *n
 	account.Status.JWT = t
 	account.Status.PublicKey = public
 
-	if !controllerutil.ContainsFinalizer(account, natsv1alpha1.FinalizerName) {
-		controllerutil.AddFinalizer(account, natsv1alpha1.FinalizerName)
-	}
-
-	return nil
-}
-
-func (r *NatsAccountReconciler) reconcileStatus(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
-	phase := utilx.IfElse(
-		utilx.Empty(account.Status.PublicKey) && utilx.Empty(account.Status.JWT),
-		natsv1alpha1.AccountPhasePending,
-		natsv1alpha1.AccountPhaseSynchronized,
-	)
-
-	if account.Status.Phase != phase {
-		account.Status.Phase = phase
-
-		return r.Status().Update(ctx, account)
-	}
-
 	return nil
 }
 
@@ -245,10 +209,14 @@ func (r *NatsAccountReconciler) IsSynchronized(obj *natsv1alpha1.NatsAccount) bo
 // ManageError ...
 func (r *NatsAccountReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsAccount, err error) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-
 	logger.Error(err, "reconciling account", "account", obj.Name)
 
+	if errors.IsNotFound(err) {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
 	status.SetNatzAccountCondition(obj, status.NewAccountFailedCondition(obj, err))
+	obj.Status.Phase = natsv1alpha1.AccountPhaseFailed
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
@@ -266,26 +234,13 @@ func (r *NatsAccountReconciler) ManageError(ctx context.Context, obj *natsv1alph
 
 // ManageSuccess ...
 func (r *NatsAccountReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
-	if r.IsSynchronized(obj) {
-		return ctrl.Result{}, nil
-	}
-
+	obj.Status.Phase = natsv1alpha1.AccountPhaseSynchronized
+	obj.Status.LastUpdate = metav1.Now()
 	status.SetNatzAccountCondition(obj, status.NewAccountSychronizedCondition(obj))
 
-	if r.IsCreating(obj) {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if err := r.Client.Status().Update(ctx, obj); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if r.IsCreating(obj) {
-		return ctrl.Result{Requeue: true}, nil
+	err := r.Status().Update(ctx, obj)
+	if err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
 	}
 
 	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonAccountSychronized), "account synchronized")

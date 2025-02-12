@@ -61,16 +61,16 @@ func (r *NatsAccountServer) GetJWT(publicKey string) (string, bool) {
 func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	account := &natsv1alpha1.NatsAccount{}
 
-	if err := r.Get(ctx, req.NamespacedName, account); err != nil {
-		if errors.IsNotFound(err) {
-			return ctrl.Result{}, nil
-		}
-
+	if err := r.Get(ctx, req.NamespacedName, account); err != nil && !errors.IsNotFound(err) {
 		return ctrl.Result{}, err
 	}
 
 	if !account.ObjectMeta.DeletionTimestamp.IsZero() {
 		return r.reconcileDelete(ctx, account)
+	}
+
+	if !r.IsSynchronized(account) {
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	err := r.reconcileAccount(ctx, account)
@@ -82,7 +82,7 @@ func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *NatsAccountServer) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
-	if finalizers.HasFinalizer(obj, natsv1alpha1.AccountServerFinalizerName) {
+	if finalizers.HasFinalizer(obj, natsv1alpha1.FinalizerName) {
 		sk := &natsv1alpha1.NatsKey{}
 		skName := client.ObjectKey{
 			Namespace: obj.Namespace,
@@ -126,7 +126,7 @@ func (r *NatsAccountServer) reconcileDelete(ctx context.Context, obj *natsv1alph
 			return ctrl.Result{}, err
 		}
 
-		obj.SetFinalizers(finalizers.RemoveFinalizer(obj, natsv1alpha1.AccountServerFinalizerName))
+		obj.SetFinalizers(finalizers.RemoveFinalizer(obj, natsv1alpha1.FinalizerName))
 
 		err = r.Update(ctx, obj)
 		if err != nil && !errors.IsNotFound(err) {
@@ -138,20 +138,7 @@ func (r *NatsAccountServer) reconcileDelete(ctx context.Context, obj *natsv1alph
 }
 
 func (r *NatsAccountServer) reconcileAccount(_ context.Context, obj *natsv1alpha1.NatsAccount) error {
-	if !r.IsSynchronized(obj) {
-		return nil
-	}
-
-	err := r.nc.Publish("$SYS.REQ.CLAIMS.UPDATE", []byte(obj.Status.JWT))
-	if err != nil {
-		return err
-	}
-
-	if !controllerutil.ContainsFinalizer(obj, natsv1alpha1.AccountServerFinalizerName) {
-		controllerutil.AddFinalizer(obj, natsv1alpha1.AccountServerFinalizerName)
-	}
-
-	return nil
+	return r.nc.Publish("$SYS.REQ.CLAIMS.UPDATE", []byte(obj.Status.JWT))
 }
 
 // IsCreating ...
@@ -166,11 +153,11 @@ func (r *NatsAccountServer) IsSynchronized(obj *natsv1alpha1.NatsAccount) bool {
 
 // ManageSuccess ...
 func (r *NatsAccountServer) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
-	if !r.IsSynchronized(obj) {
-		return ctrl.Result{Requeue: true}, nil
+	if !controllerutil.ContainsFinalizer(obj, natsv1alpha1.FinalizerName) {
+		controllerutil.AddFinalizer(obj, natsv1alpha1.FinalizerName)
 	}
 
-	if err := r.Client.Update(ctx, obj); err != nil {
+	if err := r.Client.Update(ctx, obj); err != nil && !errors.IsConflict(err) {
 		return ctrl.Result{}, err
 	}
 
