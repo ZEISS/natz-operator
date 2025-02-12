@@ -19,11 +19,11 @@ func TestDefault(t *testing.T) {
 		HTTPPort: 8222,
 		PidFile:  "/var/run/nats/nats.pid",
 		Resolver: v1alpha1.Resolver{
-			Type:          "full",
-			Dir:           "/data/resolver",
-			AllowedDelete: true,
-			Interval:      "2m",
-			Timeout:       "5s",
+			Type:        "full",
+			Dir:         "/data/resolver",
+			AllowDelete: true,
+			Interval:    "2m",
+			Timeout:     "5s",
 		},
 	}
 
@@ -39,11 +39,11 @@ func TestDefault(t *testing.T) {
 		HTTPPort: 8223,
 		PidFile:  "/var/run/nats/nats.pid",
 		Resolver: v1alpha1.Resolver{
-			Type:          "full",
-			Dir:           "/data/resolver",
-			AllowedDelete: true,
-			Interval:      "2m",
-			Timeout:       "5s",
+			Type:        "full",
+			Dir:         "/data/resolver",
+			AllowDelete: true,
+			Interval:    "2m",
+			Timeout:     "5s",
 		},
 	}
 

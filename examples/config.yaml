@@ -12,3 +12,7 @@ spec:
       namespace: default
   config:
     http_port: 8223
+    jetstream:
+      enabled: true
+      store_dir: /data
+      max_file_store: 10737418240

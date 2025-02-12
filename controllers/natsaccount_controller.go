@@ -74,15 +74,7 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if !account.ObjectMeta.DeletionTimestamp.IsZero() {
-		if finalizers.HasFinalizer(account, natsv1alpha1.FinalizerName) {
-			err := r.reconcileDelete(ctx, account)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		// Delete
-		return reconcile.Result{}, nil
+		return r.reconcileDelete(ctx, account)
 	}
 
 	// get latest version of the account
@@ -99,14 +91,18 @@ func (r *NatsAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	return r.ManageSuccess(ctx, account)
 }
 
-func (r *NatsAccountReconciler) reconcileDelete(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
-	account.SetFinalizers(finalizers.RemoveFinalizer(account, natsv1alpha1.FinalizerName))
-	err := r.Update(ctx, account)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
+func (r *NatsAccountReconciler) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsAccount) (ctrl.Result, error) {
+	if finalizers.HasFinalizer(obj, natsv1alpha1.FinalizerName) {
+		obj.SetFinalizers(finalizers.RemoveFinalizer(obj, natsv1alpha1.FinalizerName))
+
+		err := r.Update(ctx, obj)
+		if err != nil && !errors.IsNotFound(err) {
+			return ctrl.Result{}, err
+		}
 	}
 
-	return nil
+	// Delete
+	return ctrl.Result{}, nil
 }
 
 func (r *NatsAccountReconciler) reconcileResources(ctx context.Context, account *natsv1alpha1.NatsAccount) error {

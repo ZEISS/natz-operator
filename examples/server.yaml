@@ -1,3 +1,13 @@
+natsBox:
+  enabled: true
+
+config:
+  jetstream:
+    enabled: true
+    fileStore:
+      pvc:
+        size: 10Gi
+
 statefulSet:
   patch:
     - op: remove
