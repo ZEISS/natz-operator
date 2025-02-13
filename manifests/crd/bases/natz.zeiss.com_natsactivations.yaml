@@ -36,6 +36,7 @@ spec:
           metadata:
             type: object
           spec:
+            description: NatsActivationSpec defines the desired state of NatsActivation
             properties:
               accountRef:
                 description: AccountRef is a reference to the account that the activation
@@ -54,6 +55,9 @@ spec:
                 description: Expiry is the expiry time of the activation.
                 format: date-time
                 type: string
+              exportType:
+                description: ExportType is the type of export.
+                type: integer
               signerKeyRef:
                 description: SignerKeyRef is a reference to a secret that contains
                   the account signing key
@@ -89,13 +93,13 @@ spec:
                 type: object
             required:
             - accountRef
-            - expiry
+            - exportType
             - signerKeyRef
-            - start
             - subject
             - targetAccountRef
             type: object
           status:
+            description: NatsActivationStatus defines the observed state of NatsActivation
             properties:
               conditions:
                 description: Conditions is an array of conditions that the operator

@@ -7,6 +7,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -63,15 +64,7 @@ func (r *NatsActivationReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
-		if finalizers.HasFinalizer(obj, natsv1alpha1.FinalizerName) {
-			err := r.reconcileDelete(ctx, obj)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		// Delete
-		return reconcile.Result{}, nil
+		return r.reconcileDelete(ctx, obj)
 	}
 
 	// get latest version of the account
@@ -88,14 +81,15 @@ func (r *NatsActivationReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return r.ManageSuccess(ctx, obj)
 }
 
-func (r *NatsActivationReconciler) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsActivation) error {
+func (r *NatsActivationReconciler) reconcileDelete(ctx context.Context, obj *natsv1alpha1.NatsActivation) (ctrl.Result, error) {
 	obj.SetFinalizers(finalizers.RemoveFinalizer(obj, natsv1alpha1.FinalizerName))
+
 	err := r.Update(ctx, obj)
 	if err != nil && !errors.IsNotFound(err) {
-		return err
+		return ctrl.Result{}, err
 	}
 
-	return nil
+	return ctrl.Result{}, nil
 }
 
 func (r *NatsActivationReconciler) reconcileResources(ctx context.Context, obj *natsv1alpha1.NatsActivation) error {
@@ -111,6 +105,16 @@ func (r *NatsActivationReconciler) reconcileResources(ctx context.Context, obj *
 }
 
 func (r *NatsActivationReconciler) reconcileActivation(ctx context.Context, obj *natsv1alpha1.NatsActivation) error {
+	account := &natsv1alpha1.NatsAccount{}
+	accountName := client.ObjectKey{
+		Namespace: obj.Namespace,
+		Name:      obj.Spec.AccountRef.Name,
+	}
+
+	if err := r.Get(ctx, accountName, account); err != nil {
+		return err
+	}
+
 	skAccount := &natsv1alpha1.NatsAccount{}
 	skAccountName := client.ObjectKey{
 		Namespace: obj.Namespace,
@@ -146,16 +150,21 @@ func (r *NatsActivationReconciler) reconcileActivation(ctx context.Context, obj 
 		return err
 	}
 
-	token := jwt.NewActivationClaims(obj.Spec.Subject)
-
+	token := jwt.NewActivationClaims(account.Status.PublicKey)
 	token.Name = obj.Spec.Subject
-	token.ImportSubject = jwt.Subject(obj.Spec.Subject)
 	token.IssuerAccount = skAccount.Status.PublicKey
+
+	token.NotBefore = obj.Spec.Start.Unix()
+	token.Expires = obj.Spec.Expiry.Unix()
+
+	token.Activation.ImportSubject = jwt.Subject(obj.Spec.Subject)
+	token.Activation.ImportType = jwt.ExportType(obj.Spec.ExportType)
 
 	t, err := token.Encode(signerKp)
 	if err != nil {
 		return err
 	}
+
 	obj.Status.JWT = t
 
 	return nil
@@ -178,10 +187,14 @@ func (r *NatsActivationReconciler) IsSynchronized(obj *natsv1alpha1.NatsActivati
 // ManageError ...
 func (r *NatsActivationReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsActivation, err error) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-
 	logger.Error(err, "reconciling activation", "activation", obj.Name)
 
+	if errors.IsNotFound(err) {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
 	status.SetNatzActivationCondition(obj, status.NewNatzActivationFailed(obj, err))
+	obj.Status.Phase = natsv1alpha1.ActivationPhaseFailed
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
@@ -199,26 +212,13 @@ func (r *NatsActivationReconciler) ManageError(ctx context.Context, obj *natsv1a
 
 // ManageSuccess ...
 func (r *NatsActivationReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsActivation) (ctrl.Result, error) {
-	if r.IsSynchronized(obj) {
-		return ctrl.Result{}, nil
-	}
-
+	obj.Status.Phase = natsv1alpha1.ActivationSynchronized
+	obj.Status.LastUpdate = metav1.Now()
 	status.SetNatzActivationCondition(obj, status.NewNatzActivationSynchronizedCondition(obj))
 
-	if r.IsCreating(obj) {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if err := r.Client.Status().Update(ctx, obj); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if r.IsCreating(obj) {
-		return ctrl.Result{Requeue: true}, nil
+	err := r.Status().Update(ctx, obj)
+	if err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
 	}
 
 	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonAccountSychronized), "account synchronized")

@@ -32,7 +32,7 @@ import (
 // NatsActivationsGetter has a method to return a NatsActivationInterface.
 // A group's client should implement this interface.
 type NatsActivationsGetter interface {
-	NatsActivations() NatsActivationInterface
+	NatsActivations(namespace string) NatsActivationInterface
 }
 
 // NatsActivationInterface has methods to work with NatsActivation resources.
@@ -56,13 +56,13 @@ type natsActivations struct {
 }
 
 // newNatsActivations returns a NatsActivations
-func newNatsActivations(c *NatzClient) *natsActivations {
+func newNatsActivations(c *NatzClient, namespace string) *natsActivations {
 	return &natsActivations{
 		gentype.NewClientWithList[*v1alpha1.NatsActivation, *v1alpha1.NatsActivationList](
 			"natsactivations",
 			c.RESTClient(),
 			scheme.ParameterCodec,
-			"",
+			namespace,
 			func() *v1alpha1.NatsActivation { return &v1alpha1.NatsActivation{} },
 			func() *v1alpha1.NatsActivationList { return &v1alpha1.NatsActivationList{} },
 		),

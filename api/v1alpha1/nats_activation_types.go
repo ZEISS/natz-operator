@@ -22,6 +22,7 @@ type NatsActivationReference struct {
 	Namespace string `json:"namespace"`
 }
 
+// NatsActivationSpec defines the desired state of NatsActivation
 type NatsActivationSpec struct {
 	// AccountRef is a reference to the account that the activation is for.
 	AccountRef NatsAccountReference `json:"accountRef"`
@@ -30,13 +31,16 @@ type NatsActivationSpec struct {
 	// TargetAccountRef is a reference to the account that the activation is for.
 	TargetAccountRef NatsAccountReference `json:"targetAccountRef"`
 	// Expiry is the expiry time of the activation.
-	Expiry metav1.Time `json:"expiry"`
+	Expiry metav1.Time `json:"expiry,omitempty"`
 	// Start is the start time of the activation.
-	Start metav1.Time `json:"start"`
+	Start metav1.Time `json:"start,omitempty"`
 	// Subject is the subject that the activation is for.
 	Subject string `json:"subject"`
+	// ExportType is the type of export.
+	ExportType ExportType `json:"exportType"`
 }
 
+// NatsActivationStatus defines the observed state of NatsActivation
 type NatsActivationStatus struct {
 	// JWT is the JWT for the user
 	JWT string `json:"jwt,omitempty"`
@@ -53,10 +57,9 @@ type NatsActivationStatus struct {
 }
 
 // +genclient
-// +genclient:nonNamespaced
-
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +genreconciler
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 type NatsActivation struct {
 	metav1.TypeMeta   `json:",inline"`

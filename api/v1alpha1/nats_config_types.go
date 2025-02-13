@@ -233,9 +233,8 @@ type NatsConfigStatus struct {
 // +genclient
 // +genclient:nonNamespaced
 // +genreconciler
-
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 type NatsConfig struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -45,8 +45,8 @@ func (c *NatzClient) NatsAccounts() NatsAccountInterface {
 	return newNatsAccounts(c)
 }
 
-func (c *NatzClient) NatsActivations() NatsActivationInterface {
-	return newNatsActivations(c)
+func (c *NatzClient) NatsActivations(namespace string) NatsActivationInterface {
+	return newNatsActivations(c, namespace)
 }
 
 func (c *NatzClient) NatsConfigs() NatsConfigInterface {

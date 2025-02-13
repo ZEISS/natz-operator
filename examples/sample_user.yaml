@@ -24,7 +24,12 @@ spec:
   signingKeys:
     - name: natsaccount-sample-signing-key
   imports: []
-  exports: []
+  # Define the exports of the accounts
+  exports:
+    - name: "ORDERS"
+      subject: "app.orders.>"
+      token_req: true
+      type: 1
   limits:
     conn: -1
     imports: -1

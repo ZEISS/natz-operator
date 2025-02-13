@@ -22,14 +22,16 @@ var (
 func init() {
 	RootCmd.AddCommand(CredsCmd)
 	RootCmd.AddCommand(CfgCmd)
+	RootCmd.AddCommand(ActivationCmd)
 
-	CfgCmd.AddCommand(CfgListCmd)
+	ActivationCmd.AddCommand(GetActivationCmd)
 
 	RootCmd.PersistentFlags().BoolVarP(&config.Verbose, "verbose", "v", config.Verbose, "verbose output")
 	RootCmd.PersistentFlags().BoolVarP(&config.Force, "force", "f", config.Force, "force overwrite")
 	RootCmd.PersistentFlags().StringVarP(&config.Namespace, "namespace", "n", config.Namespace, "namespace")
 
 	CredsCmd.PersistentFlags().StringVarP(&config.Creds.User, "user", "u", config.Creds.User, "user name")
+	ActivationCmd.PersistentFlags().StringVarP(&config.Activation.Activation, "activation", "a", config.Activation.Activation, "activation name")
 
 	RootCmd.SilenceErrors = true
 	RootCmd.SilenceUsage = true

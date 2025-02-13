@@ -1,0 +1,71 @@
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsaccount-activation-sample-private-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsaccount-activation-sample-signing-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsAccount
+metadata:
+  name: natsaccount-activation-sample
+spec:
+  signerKeyRef:
+    name: natsoperator-sample-private-key
+  privateKey:
+    name: natsaccount-activation-sample-private-key
+  signingKeys:
+    - name: natsaccount-activation-sample-signing-key
+  imports: []
+  exports: []
+  limits:
+    conn: -1
+    imports: -1
+    exports: -1
+    subs: -1
+    payload: -1
+    data: -1
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsuser-activation-sample-private-key
+spec:
+  type: User
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsUser
+metadata:
+  name: natsuser-activation-sample
+spec:
+  accountRef:
+    name: natsaccount-activation-sample
+  privateKey:
+    name: natsuser-activation-sample-private-key
+  signerKeyRef:
+    name: natsaccount-activation-sample-signing-key
+  limits:
+    payload: -1
+    subs: -1
+    data: -1
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsActivation
+metadata:
+  name: nats-sample
+spec:
+  accountRef:
+    name: natsaccount-sample
+  signerKeyRef:
+    name: natsaccount-sample-signing-key
+  targetAccountRef:
+    name: natsaccount-activation-sample
+  subject: app.orders.>
+  exportType: 1

@@ -138,9 +138,8 @@ type NatsAccountStatus struct {
 // +genclient
 // +genclient:nonNamespaced
 // +genreconciler
-
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // NatsAccount is the Schema for the natsaccounts API
 type NatsAccount struct {

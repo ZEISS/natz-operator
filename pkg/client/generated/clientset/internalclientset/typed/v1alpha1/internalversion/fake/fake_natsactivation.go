@@ -30,11 +30,11 @@ type fakeNatsActivations struct {
 	Fake *FakeNatz
 }
 
-func newFakeNatsActivations(fake *FakeNatz) internalversion.NatsActivationInterface {
+func newFakeNatsActivations(fake *FakeNatz, namespace string) internalversion.NatsActivationInterface {
 	return &fakeNatsActivations{
 		gentype.NewFakeClientWithList[*v1alpha1.NatsActivation, *v1alpha1.NatsActivationList](
 			fake.Fake,
-			"",
+			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("natsactivations"),
 			v1alpha1.SchemeGroupVersion.WithKind("NatsActivation"),
 			func() *v1alpha1.NatsActivation { return &v1alpha1.NatsActivation{} },

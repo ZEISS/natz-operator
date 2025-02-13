@@ -11,19 +11,21 @@ import (
 // DefaultConfig is the default configuration for the root command.
 func DefaultConfig() Config {
 	return Config{
-		Verbose: false,
-		Force:   false,
+		Verbose:   false,
+		Force:     false,
+		Namespace: "default",
 	}
 }
 
 // Config is a struct that holds the configuration for the root command.
 type Config struct {
-	KubeConfig string      `json:"kubeconfig"`
-	Context    string      `json:"context"`
-	Verbose    bool        `json:"verbose"`
-	Force      bool        `json:"force"`
-	Creds      CredsConfig `json:"creds"`
-	Namespace  string      `json:"namespace"`
+	KubeConfig string           `json:"kubeconfig"`
+	Context    string           `json:"context"`
+	Verbose    bool             `json:"verbose"`
+	Force      bool             `json:"force"`
+	Creds      CredsConfig      `json:"creds"`
+	Activation ActivationConfig `json:"activation"`
+	Namespace  string           `json:"namespace"`
 }
 
 // GetKubeConfig returns the path to the kubeconfig file.

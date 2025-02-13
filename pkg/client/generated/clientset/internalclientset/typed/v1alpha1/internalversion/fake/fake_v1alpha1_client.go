@@ -32,8 +32,8 @@ func (c *FakeNatz) NatsAccounts() internalversion.NatsAccountInterface {
 	return newFakeNatsAccounts(c)
 }
 
-func (c *FakeNatz) NatsActivations() internalversion.NatsActivationInterface {
-	return newFakeNatsActivations(c)
+func (c *FakeNatz) NatsActivations(namespace string) internalversion.NatsActivationInterface {
+	return newFakeNatsActivations(c, namespace)
 }
 
 func (c *FakeNatz) NatsConfigs() internalversion.NatsConfigInterface {
