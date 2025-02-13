@@ -28,6 +28,8 @@ There are three custom account resources that can be used to configure the opera
 - `NatsUser`
 - `NatsConfiguration`
 - `NatsGateway`
+- `NatsConfig`
+- `NatsActivation`
 
 These can be configured with `NatsKey` to provide a private key and additional signing keys for the operator and accounts.
 
