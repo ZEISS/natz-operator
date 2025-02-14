@@ -9,7 +9,7 @@ require (
 	github.com/golangci/golangci-lint v1.64.4
 	github.com/goreleaser/goreleaser v1.26.2
 	gotest.tools/gotestsum v1.12.0
-	k8s.io/code-generator v0.32.1
+	k8s.io/code-generator v0.32.2
 	mvdan.cc/gofumpt v0.7.0
 	sigs.k8s.io/kustomize/kustomize/v5 v5.6.0
 )
