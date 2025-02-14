@@ -211,44 +211,35 @@ spec:
 The operator can be integrated with the NATS operator.
 
 ```yaml
+natsBox:
+  enabled: true
+
 config:
   jetstream:
     enabled: true
     fileStore:
       pvc:
-        size: 2Gi
-  resolver:
-    enabled: true
-    merge:
-      type: full
-      interval: "2m"
-      timeout: "1.9s"
-  merge:
-    00$include: "../custom-auth/auth.conf"
-    debug: true
-container:
-  patch:
-    - op: add
-      path: "/volumeMounts/-"
-      value:
-        name: auth-config
-        mountPath: "/etc/custom-auth"
+        size: 10Gi
+
 statefulSet:
   patch:
+    - op: remove
+      path: /spec/template/spec/volumes/0
     - op: add
       path: /spec/template/spec/volumes/-
       value:
-        name: auth-config
-        configMap:
-          name: nats-default-configs
+        name: config
+        secret:
+          defaultMode: 420
+          secretName: nats-default-config
 ```
 
 ## Development
 
-You can use [minikube](https://minikube.sigs.k8s.io/docs/) to test the operator.
+You can use [kind](https://kind.sigs.k8s.io/) to test the operator.
 
 ```shell
-minikube start
+kind create cluster
 ```
 
 The operator can be built and tested using the following commands.

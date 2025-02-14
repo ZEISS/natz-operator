@@ -31,8 +31,7 @@
       "extensions": [
         "GitHub.copilot",
         "GitHub.vscode-github-actions",
-        "golang.go",
-        "ms-vscode.makefile-tools"
+        "golang.go"
       ]
     }
   }
