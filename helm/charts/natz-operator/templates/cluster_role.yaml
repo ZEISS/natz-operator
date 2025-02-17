@@ -6,6 +6,15 @@ metadata:
   {{- include "natz-operator.labels" . | nindent 4 }}
 rules:
 - resources:
+  - events
+  apiGroups:
+  - ""
+  - events.k8s.io
+  verbs:
+  - create
+  - patch
+  - update
+- resources:
   - configmaps
   apiGroups:
   - ""
@@ -56,6 +65,7 @@ rules:
   - natsconfigs/finalizers
   - natsgateways/finalizers
   - natsactivations/finalizers
+  - natskeys/finalizers
   verbs:
   - update
 - apiGroups:
@@ -67,7 +77,9 @@ rules:
   - natsconfigs/status
   - natsaccounts/status
   - natsactivations/status
+  - natskeys/status
   verbs:
   - get
   - patch
   - update
+  
