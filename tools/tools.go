@@ -7,6 +7,7 @@ import (
 	_ "github.com/golang/mock/mockgen/model"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/goreleaser/goreleaser"
+	_ "github.com/zeiss/pkg/cmd/runproc"
 	_ "gotest.tools/gotestsum"
 	_ "k8s.io/code-generator"
 	_ "mvdan.cc/gofumpt"

@@ -20,6 +20,7 @@ tmp
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+Procfile.local
 
 ### Go Patch ###
 /vendor/

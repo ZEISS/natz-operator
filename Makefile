@@ -9,6 +9,7 @@ GO_RELEASER 		?= $(GO_RUN_TOOLS) github.com/goreleaser/goreleaser
 GO_MOD 				?= $(shell ${GO} list -m)
 GO_KUSTOMIZE 		?= $(GO_RUN_TOOLS) sigs.k8s.io/kustomize/kustomize/v5
 
+PWD 				:= $(shell pwd)
 IMAGE_TAG_BASE 		?= ghcr.io/zeiss/natz-operator/operator
 IMG 				?= $(IMAGE_TAG_BASE):$(VERSION)
 
@@ -30,7 +31,7 @@ release: ## Create a release
 
 .PHONY: up
 up: ## Run the operator locally.
-	air -c .air.toml
+	$(GO_RUN_TOOLS) github.com/zeiss/pkg/cmd/runproc -f ${PWD}/Procfile -l ${PWD}/Procfile.local
 
 .PHONY: start
 start: up ## Alias for up.

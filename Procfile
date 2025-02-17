@@ -1,0 +1,1 @@
+operator: air -c .air.toml
