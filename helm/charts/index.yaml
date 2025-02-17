@@ -2,6 +2,26 @@ apiVersion: v1
 entries:
   account-server:
   - apiVersion: v2
+    appVersion: 1.0.0-beta.3
+    created: "2025-02-17T15:21:28.044924563Z"
+    description: 'A helm chart for the account-server that provides NATS accounting. '
+    digest: 260c9f8492ce7f5c4e4927bd80d951630e80278d511724c6a00f357b40c8f3ab
+    home: https://github.com/zeiss/natz-operator
+    keywords:
+    - nats
+    - accounting
+    kubeVersion: '>=1.26.0-0'
+    maintainers:
+    - name: Sebastian Doell
+      url: https://github.com/katallaxie
+    name: account-server
+    sources:
+    - https://github.com/zeiss/natz-operator/tree/main/helm/charts/account-server
+    - https://github.com/zeiss/natz-operator
+    urls:
+    - https://github.com/ZEISS/natz-operator/releases/download/account-server-1.0.0-beta.3/account-server-1.0.0-beta.3.tgz
+    version: 1.0.0-beta.3
+  - apiVersion: v2
     appVersion: 1.0.0-beta.2
     created: "2025-02-13T13:24:47.362164539Z"
     description: 'A helm chart for the account-server that provides NATS accounting. '
@@ -322,6 +342,26 @@ entries:
     - https://github.com/ZEISS/natz-operator/releases/download/account-server-0.0.3/account-server-0.0.3.tgz
     version: 0.0.3
   natz-operator:
+  - apiVersion: v2
+    appVersion: 1.0.0-beta.3
+    created: "2025-02-17T15:21:28.232839703Z"
+    description: 'A helm chart for the natz-operator that provides NATS accounting. '
+    digest: ff475f5cd2fc9094a5265fca3513bd4d3afa0d7580825505b7b10c7df7aa40ec
+    home: https://github.com/zeiss/natz-operator
+    keywords:
+    - nats
+    - accounting
+    kubeVersion: '>=1.26.0-0'
+    maintainers:
+    - name: Sebastian Doell
+      url: https://github.com/katallaxie
+    name: natz-operator
+    sources:
+    - https://github.com/zeiss/natz-operator/tree/main/helm/charts/natz-operator
+    - https://github.com/zeiss/natz-operator
+    urls:
+    - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-1.0.0-beta.3/natz-operator-1.0.0-beta.3.tgz
+    version: 1.0.0-beta.3
   - apiVersion: v2
     appVersion: 1.0.0-beta.2
     created: "2025-02-13T13:24:47.531515854Z"
@@ -702,4 +742,4 @@ entries:
     urls:
     - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-0.0.1-beta.2/natz-operator-0.0.1-beta.2.tgz
     version: 0.0.1-beta.2
-generated: "2025-02-13T13:24:47.531787381Z"
+generated: "2025-02-17T15:21:28.233127634Z"
