@@ -1,0 +1,25 @@
+{{- if .Values.config.operator.create }}
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: {{ include "account-server.name" . }}-operator-private-key
+spec:
+  type: Operator
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: {{ include "account-server.name" . }}-operator-signing-key
+spec:
+  type: Operator
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsOperator
+metadata:
+  name: {{ include "account-server.name" . }}
+spec:
+  privateKey:
+    name: {{ include "account-server.name" . }}-operator-private-key
+  signingKeys:
+    - name: {{ include "account-server.name" . }}-operator-signing-key
+{{- end }}

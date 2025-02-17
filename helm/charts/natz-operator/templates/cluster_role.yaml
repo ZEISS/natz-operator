@@ -6,6 +6,18 @@ metadata:
   {{- include "natz-operator.labels" . | nindent 4 }}
 rules:
 - resources:
+  - configmaps
+  apiGroups:
+  - ""
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch  
+- resources:
   - secrets
   apiGroups:
   - ""
@@ -20,7 +32,13 @@ rules:
 - apiGroups:
   - natz.zeiss.com
   resources:
+  - natskeys
   - natsaccounts
+  - natsoperators
+  - natsusers
+  - natsconfigs
+  - natsgateways
+  - natsactivations
   verbs:
   - create
   - delete
@@ -33,64 +51,22 @@ rules:
   - natz.zeiss.com
   resources:
   - natsaccounts/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - natz.zeiss.com
-  resources:
-  - natsaccounts/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - natz.zeiss.com
-  resources:
-  - natsoperators
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - natz.zeiss.com
-  resources:
   - natsoperators/finalizers
+  - natsusers/finalizers
+  - natsconfigs/finalizers
+  - natsgateways/finalizers
+  - natsactivations/finalizers
   verbs:
   - update
 - apiGroups:
   - natz.zeiss.com
   resources:
   - natsoperators/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - natz.zeiss.com
-  resources:
-  - natsusers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - natz.zeiss.com
-  resources:
-  - natsusers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - natz.zeiss.com
-  resources:
   - natsusers/status
+  - natsgateways/status
+  - natsconfigs/status
+  - natsaccounts/status
+  - natsactivations/status
   verbs:
   - get
   - patch

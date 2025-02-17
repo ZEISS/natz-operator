@@ -1,0 +1,1851 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: natsaccounts.natz.zeiss.com
+spec:
+  group: natz.zeiss.com
+  names:
+    kind: NatsAccount
+    listKind: NatsAccountList
+    plural: natsaccounts
+    singular: natsaccount
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NatsAccount is the Schema for the natsaccounts API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NatsAccountSpec defines the desired state of NatsAccount
+            properties:
+              allowedUserNamespaces:
+                description: |-
+                  Namespaces that are allowed for user creation.
+                  If a NatsUser is referencing this account outside of these namespaces, the operator will create an event for it saying that it's not allowed.
+                items:
+                  type: string
+                type: array
+              exports:
+                items:
+                  description: Export ...
+                  properties:
+                    account_token_position:
+                      type: integer
+                    advertise:
+                      type: boolean
+                    description:
+                      type: string
+                    info_url:
+                      type: string
+                    name:
+                      type: string
+                    response_threshold:
+                      description: |-
+                        A Duration represents the elapsed time between two instants
+                        as an int64 nanosecond count. The representation limits the
+                        largest representable duration to approximately 290 years.
+                      format: int64
+                      type: integer
+                    response_type:
+                      description: ResponseType is used to store an export response
+                        type
+                      type: string
+                    revocations:
+                      additionalProperties:
+                        format: int64
+                        type: integer
+                      description: RevocationList is used to store a mapping of public
+                        keys to unix timestamps
+                      type: object
+                    service_latency:
+                      description: "ServiceLatency is used when observing and exported
+                        service for\nlatency measurements.\nSampling 1-100, represents
+                        sampling rate, defaults to 100.\nResults is the subject where
+                        the latency metrics are published.\nA metric will be defined
+                        by the nats-server's ServiceLatency. Time durations\nare in
+                        nanoseconds.\nsee https://github.com/nats-io/nats-server/blob/main/server/accounts.go#L524\ne.g.\n\n\t{\n\t
+                        \"app\": \"dlc22\",\n\t \"start\": \"2019-09-16T21:46:23.636869585-07:00\",\n\t
+                        \"svc\": 219732,\n\t \"nats\": {\n\t   \"req\": 320415,\n\t
+                        \  \"resp\": 228268,\n\t   \"sys\": 0\n\t },\n\t \"total\":
+                        768415\n\t}"
+                      properties:
+                        results:
+                          description: Subject is a string that represents a NATS
+                            subject
+                          type: string
+                        sampling:
+                          type: integer
+                      required:
+                      - results
+                      - sampling
+                      type: object
+                    subject:
+                      description: Subject is a string that represents a NATS subject
+                      type: string
+                    token_req:
+                      type: boolean
+                    type:
+                      description: ExportType defines the type of import/export.
+                      type: integer
+                  type: object
+                type: array
+              imports:
+                description: These fields are directly mappejwtd into the NATS JWT
+                  claim
+                items:
+                  description: Import describes a mapping from another account into
+                    this one
+                  properties:
+                    account:
+                      type: string
+                    allow_trace:
+                      type: boolean
+                    local_subject:
+                      description: |-
+                        Local subject used to subscribe (for streams) and publish (for services) to.
+                        This value only needs setting if you want to change the value of Subject.
+                        If the value of Subject ends in > then LocalSubject needs to end in > as well.
+                        LocalSubject can contain $<number> wildcard references where number references the nth wildcard in Subject.
+                        The sum of wildcard reference and * tokens needs to match the number of * token in Subject.
+                      type: string
+                    name:
+                      type: string
+                    share:
+                      type: boolean
+                    subject:
+                      description: |-
+                        Subject field in an import is always from the perspective of the
+                        initial publisher - in the case of a stream it is the account owning
+                        the stream (the exporter), and in the case of a service it is the
+                        account making the request (the importer).
+                      type: string
+                    to:
+                      description: |-
+                        Deprecated: use LocalSubject instead
+                        To field in an import is always from the perspective of the subscriber
+                        in the case of a stream it is the client of the stream (the importer),
+                        from the perspective of a service, it is the subscription waiting for
+                        requests (the exporter). If the field is empty, it will default to the
+                        value in the Subject field.
+                      type: string
+                    token:
+                      type: string
+                    type:
+                      description: ExportType defines the type of import/export.
+                      type: integer
+                  type: object
+                type: array
+              limits:
+                description: OperatorLimits are used to limit access by an account
+                properties:
+                  conn:
+                    format: int64
+                    type: integer
+                  consumer:
+                    format: int64
+                    type: integer
+                  data:
+                    format: int64
+                    type: integer
+                  disallow_bearer:
+                    type: boolean
+                  disk_max_stream_bytes:
+                    format: int64
+                    type: integer
+                  disk_storage:
+                    format: int64
+                    type: integer
+                  exports:
+                    format: int64
+                    type: integer
+                  imports:
+                    format: int64
+                    type: integer
+                  leaf:
+                    format: int64
+                    type: integer
+                  max_ack_pending:
+                    format: int64
+                    type: integer
+                  max_bytes_required:
+                    type: boolean
+                  mem_max_stream_bytes:
+                    format: int64
+                    type: integer
+                  mem_storage:
+                    format: int64
+                    type: integer
+                  payload:
+                    format: int64
+                    type: integer
+                  streams:
+                    format: int64
+                    type: integer
+                  subs:
+                    format: int64
+                    type: integer
+                  tiered_limits:
+                    additionalProperties:
+                      properties:
+                        consumer:
+                          format: int64
+                          type: integer
+                        disk_max_stream_bytes:
+                          format: int64
+                          type: integer
+                        disk_storage:
+                          format: int64
+                          type: integer
+                        max_ack_pending:
+                          format: int64
+                          type: integer
+                        max_bytes_required:
+                          type: boolean
+                        mem_max_stream_bytes:
+                          format: int64
+                          type: integer
+                        mem_storage:
+                          format: int64
+                          type: integer
+                        streams:
+                          format: int64
+                          type: integer
+                      type: object
+                    type: object
+                  wildcards:
+                    type: boolean
+                type: object
+              operatorSigningKey:
+                description: OperatorSigningKey is the reference to the operator signing
+                  key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
+              privateKey:
+                description: PrivateKey is a reference to a secret that contains the
+                  private key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
+              revocations:
+                additionalProperties:
+                  format: int64
+                  type: integer
+                description: RevocationList is used to store a mapping of public keys
+                  to unix timestamps
+                type: object
+              signerKeyRef:
+                description: SignerKeyRef is the reference to the secret that contains
+                  the signing key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
+              signingKeys:
+                description: SigningKeys is a list of references to secrets that contain
+                  the signing keys
+                items:
+                  properties:
+                    name:
+                      description: Name is the name of the key as a reference
+                      type: string
+                    namespace:
+                      description: Namespace is the namespace of the key as a reference
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            type: object
+          status:
+            description: NatsAccountStatus defines the observed state of NatsAccount
+            properties:
+              conditions:
+                description: Conditions is an array of conditions that the operator
+                  is currently in.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              controlPaused:
+                description: ControlPaused is a flag that indicates if the operator
+                  is paused.
+                type: boolean
+              jwt:
+                description: JWT is the JWT that the account is currently using.
+                type: string
+              lastUpdate:
+                description: LastUpdate is the timestamp of the last update.
+                format: date-time
+                type: string
+              phase:
+                description: Phase is the current phase of the operator.
+                enum:
+                - None
+                - Pending
+                - Creating
+                - Synchronized
+                - Failed
+                type: string
+              publicKey:
+                description: PublicKey is the public key that the account is currently
+                  using.
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: natsactivations.natz.zeiss.com
+spec:
+  group: natz.zeiss.com
+  names:
+    kind: NatsActivation
+    listKind: NatsActivationList
+    plural: natsactivations
+    singular: natsactivation
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NatsActivationSpec defines the desired state of NatsActivation
+            properties:
+              accountRef:
+                description: AccountRef is a reference to the account that the activation
+                  is for.
+                properties:
+                  name:
+                    description: Name is the name of the account.
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the account.
+                    type: string
+                required:
+                - name
+                type: object
+              expiry:
+                description: Expiry is the expiry time of the activation.
+                format: date-time
+                type: string
+              exportType:
+                description: ExportType is the type of export.
+                type: integer
+              signerKeyRef:
+                description: SignerKeyRef is a reference to a secret that contains
+                  the account signing key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
+              start:
+                description: Start is the start time of the activation.
+                format: date-time
+                type: string
+              subject:
+                description: Subject is the subject that the activation is for.
+                type: string
+              targetAccountRef:
+                description: TargetAccountRef is a reference to the account that the
+                  activation is for.
+                properties:
+                  name:
+                    description: Name is the name of the account.
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the account.
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - accountRef
+            - exportType
+            - signerKeyRef
+            - subject
+            - targetAccountRef
+            type: object
+          status:
+            description: NatsActivationStatus defines the observed state of NatsActivation
+            properties:
+              conditions:
+                description: Conditions is an array of conditions that the operator
+                  is currently in.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              controlPaused:
+                description: ControlPaused is a flag that indicates if the operator
+                  is paused.
+                type: boolean
+              jwt:
+                description: JWT is the JWT for the user
+                type: string
+              lastUpdate:
+                description: LastUpdate is the timestamp of the last update.
+                format: date-time
+                type: string
+              phase:
+                description: Phase is the current phase of the operator.
+                enum:
+                - None
+                - Pending
+                - Creating
+                - Synchronized
+                - Failed
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: natsconfigs.natz.zeiss.com
+spec:
+  group: natz.zeiss.com
+  names:
+    kind: NatsConfig
+    listKind: NatsConfigList
+    plural: natsconfigs
+    singular: natsconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NatsConfigSpec defines the desired state of NatsConfig
+            properties:
+              config:
+                description: Config is the configuration that should be applied.
+                properties:
+                  authorization:
+                    description: Authorization ...
+                    properties:
+                      auth_callout:
+                        description: AuthCallout ...
+                        properties:
+                          account:
+                            description: Account ...
+                            type: string
+                          auth_users:
+                            description: AuthUsers ...
+                            items:
+                              type: string
+                            type: array
+                          issuer:
+                            description: Issuer ...
+                            type: string
+                          xkey:
+                            description: XKey ...
+                            type: string
+                        required:
+                        - account
+                        - auth_users
+                        - issuer
+                        - xkey
+                        type: object
+                      password:
+                        type: string
+                      timeout:
+                        type: integer
+                      token:
+                        type: string
+                      user:
+                        type: string
+                    type: object
+                  client_advertise:
+                    description: ClientAdvertise ...
+                    type: string
+                  gateway:
+                    description: Gateway ...
+                    properties:
+                      advertise:
+                        description: Advertise ...
+                        type: string
+                      authorization:
+                        description: Authorization ...
+                        properties:
+                          auth_callout:
+                            description: AuthCallout ...
+                            properties:
+                              account:
+                                description: Account ...
+                                type: string
+                              auth_users:
+                                description: AuthUsers ...
+                                items:
+                                  type: string
+                                type: array
+                              issuer:
+                                description: Issuer ...
+                                type: string
+                              xkey:
+                                description: XKey ...
+                                type: string
+                            required:
+                            - account
+                            - auth_users
+                            - issuer
+                            - xkey
+                            type: object
+                          password:
+                            type: string
+                          timeout:
+                            type: integer
+                          token:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      connect_retries:
+                        description: ConnectTimeout ...
+                        type: integer
+                      gateways:
+                        description: Gateways ...
+                        items:
+                          description: GatewayEntry ...
+                          properties:
+                            name:
+                              description: Name ...
+                              type: string
+                            tls:
+                              description: TLS ...
+                              properties:
+                                ca_file:
+                                  description: CAFile ...
+                                  type: string
+                                cert_file:
+                                  description: CertFile ...
+                                  type: string
+                                cipher_suites:
+                                  description: CipherSuites ...
+                                  type: string
+                                connection_rate_limit:
+                                  description: ConnectionRateLimit ...
+                                  type: integer
+                                curve_preferences:
+                                  description: CurvePreferences ...
+                                  type: string
+                                insecure:
+                                  description: Insecure ...
+                                  type: boolean
+                                key_file:
+                                  description: KeyFile ...
+                                  type: string
+                                pinned_certs:
+                                  description: PinnedCerts ...
+                                  items:
+                                    type: string
+                                  type: array
+                                verify:
+                                  description: Verify ...
+                                  type: boolean
+                                verify_and_map:
+                                  description: VerifyAndMap ...
+                                  type: boolean
+                                verify_cert_and_check_known_urls:
+                                  description: VerifyCertAndCheckKnownURLs ...
+                                  type: boolean
+                              required:
+                              - ca_file
+                              - cert_file
+                              - cipher_suites
+                              - key_file
+                              - pinned_certs
+                              - verify
+                              - verify_and_map
+                              type: object
+                            urls:
+                              description: URLS ...
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - name
+                          - urls
+                          type: object
+                        type: array
+                      host:
+                        description: Host ...
+                        type: string
+                      listen:
+                        description: Listen ...
+                        type: string
+                      name:
+                        description: Name ...
+                        type: string
+                      port:
+                        description: Port ...
+                        type: integer
+                      reject_unknown_cluster:
+                        description: RejectUnknownCluster ...
+                        type: boolean
+                    required:
+                    - name
+                    type: object
+                  host:
+                    description: Host ...
+                    type: string
+                  http_port:
+                    description: HTTPPort ...
+                    type: integer
+                  jetstream:
+                    description: JetStream ...
+                    properties:
+                      cipher:
+                        description: Cipher ...
+                        type: string
+                      domain:
+                        description: Domain ...
+                        type: string
+                      enabled:
+                        description: Enabled ...
+                        type: boolean
+                      encryption_key:
+                        description: EncryptionKey ...
+                        type: string
+                      extension_hint:
+                        description: ExtensionHint ...
+                        type: string
+                      limits:
+                        description: Limits ...
+                        properties:
+                          duplicate_window:
+                            description: DuplicateWindow ...
+                            type: integer
+                          max_ack_pending:
+                            description: MaxAckPending ...
+                            type: integer
+                          max_ha_assets:
+                            description: MaxHaAssets ...
+                            type: integer
+                          max_request_batch:
+                            description: MaxRequestBatch ...
+                            type: integer
+                        type: object
+                      max_file_store:
+                        description: MaxFileStore ...
+                        type: integer
+                      max_memory_store:
+                        description: MaxMemoryStore ...
+                        type: integer
+                      max_outstanding_catchup:
+                        description: MaxOutStandingCatchUp ...
+                        type: string
+                      store_dir:
+                        description: StoreDir ...
+                        type: string
+                      sync_interval:
+                        description: SyncInterval ...
+                        type: string
+                      unique_tag:
+                        description: UniqueTag ...
+                        type: string
+                    required:
+                    - enabled
+                    - store_dir
+                    type: object
+                  operator:
+                    description: Operator ...
+                    type: string
+                  pid_file:
+                    description: PidFile ...
+                    type: string
+                  port:
+                    description: Port ...
+                    type: integer
+                  resolver:
+                    description: Resolver ...
+                    properties:
+                      allow_delete:
+                        description: AllowDelete ...
+                        type: boolean
+                      dir:
+                        description: Dir ...
+                        type: string
+                      interval:
+                        description: Interval ...
+                        type: string
+                      limit:
+                        description: Limit ...
+                        type: integer
+                      timeout:
+                        description: Timeout ...
+                        type: string
+                      type:
+                        description: Type ...
+                        type: string
+                    required:
+                    - limit
+                    type: object
+                  resolver_preload:
+                    additionalProperties:
+                      type: string
+                    description: ResolverPreload ...
+                    type: object
+                  system_account:
+                    description: SystemAccount ...
+                    type: string
+                  tls:
+                    description: TLS ...
+                    properties:
+                      ca_file:
+                        description: CAFile ...
+                        type: string
+                      cert_file:
+                        description: CertFile ...
+                        type: string
+                      cipher_suites:
+                        description: CipherSuites ...
+                        type: string
+                      connection_rate_limit:
+                        description: ConnectionRateLimit ...
+                        type: integer
+                      curve_preferences:
+                        description: CurvePreferences ...
+                        type: string
+                      insecure:
+                        description: Insecure ...
+                        type: boolean
+                      key_file:
+                        description: KeyFile ...
+                        type: string
+                      pinned_certs:
+                        description: PinnedCerts ...
+                        items:
+                          type: string
+                        type: array
+                      verify:
+                        description: Verify ...
+                        type: boolean
+                      verify_and_map:
+                        description: VerifyAndMap ...
+                        type: boolean
+                      verify_cert_and_check_known_urls:
+                        description: VerifyCertAndCheckKnownURLs ...
+                        type: boolean
+                    required:
+                    - ca_file
+                    - cert_file
+                    - cipher_suites
+                    - key_file
+                    - pinned_certs
+                    - verify
+                    - verify_and_map
+                    type: object
+                type: object
+              gateways:
+                description: Gateways is a list of gateways that should be configured.
+                items:
+                  description: NatsGatewayRef is a reference to a NatsGateway
+                  properties:
+                    name:
+                      description: Name is the name of the gateway
+                      type: string
+                    namespace:
+                      description: Namespace is the namespace of the gateway
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+              operatorRef:
+                description: OperatorRef is a reference to the operator that is managing
+                  the config.
+                properties:
+                  name:
+                    description: Name is the name of the operator.
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the operator.
+                    type: string
+                required:
+                - name
+                type: object
+              systemAccountRef:
+                description: SystemAccountRef is a reference to the system account.
+                properties:
+                  name:
+                    description: Name is the name of the account.
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the account.
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - operatorRef
+            - systemAccountRef
+            type: object
+          status:
+            description: NatsConfigStatus defines the observed state of NatsConfig
+            properties:
+              conditions:
+                description: Conditions is an array of conditions that the operator
+                  is currently in.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              controlPaused:
+                description: ControlPaused is a flag that indicates if the operator
+                  is paused.
+                type: boolean
+              lastUpdate:
+                description: LastUpdate is the timestamp of the last update.
+                format: date-time
+                type: string
+              phase:
+                description: Phase is the current phase of the operator.
+                enum:
+                - None
+                - Pending
+                - Creating
+                - Synchronized
+                - Failed
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: natsgateways.natz.zeiss.com
+spec:
+  group: natz.zeiss.com
+  names:
+    kind: NatsGateway
+    listKind: NatsGatewayList
+    plural: natsgateways
+    singular: natsgateway
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              password:
+                description: Password is the password of the gateway.
+                properties:
+                  secretKeyRef:
+                    description: The Secret key to select from.
+                    properties:
+                      key:
+                        description: The key of the secret to select from.  Must be
+                          a valid secret key.
+                        type: string
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                      optional:
+                        description: Specify whether the Secret or its key must be
+                          defined
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                type: object
+              url:
+                description: URL is the URL of the gateway.
+                type: string
+              username:
+                description: Username is the username of the gateway.
+                properties:
+                  secretKeyRef:
+                    description: The Secret key to select from.
+                    properties:
+                      key:
+                        description: The key of the secret to select from.  Must be
+                          a valid secret key.
+                        type: string
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                      optional:
+                        description: Specify whether the Secret or its key must be
+                          defined
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                type: object
+            required:
+            - url
+            type: object
+          status:
+            properties:
+              conditions:
+                description: Conditions is an array of conditions that the operator
+                  is currently in.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              controlPaused:
+                description: ControlPaused is a flag that indicates if the operator
+                  is paused.
+                type: boolean
+              lastUpdate:
+                description: LastUpdate is the timestamp of the last update.
+                format: date-time
+                type: string
+              phase:
+                description: Phase is the current phase of the operator.
+                enum:
+                - None
+                - Pending
+                - Creating
+                - Synchronized
+                - Failed
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: natskeys.natz.zeiss.com
+spec:
+  group: natz.zeiss.com
+  names:
+    kind: NatsKey
+    listKind: NatsKeyList
+    plural: natskeys
+    singular: natskey
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NatsKey is the Schema for a NATS key.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NatsKeySpec defines the desired state of a NATS key.
+            properties:
+              paused:
+                default: false
+                description: Paused is a flag that indicates if the  is paused.
+                type: boolean
+              prevent_deletion:
+                default: false
+                description: PreventDeletion is a flag that indicates if the  should
+                  be locked to prevent deletion.
+                type: boolean
+              type:
+                description: Type is the type of the N.
+                enum:
+                - Operator
+                - Account
+                - User
+                type: string
+            required:
+            - type
+            type: object
+          status:
+            description: NatsKeyStatus defines the observed state of a NATS key.
+            properties:
+              conditions:
+                description: Conditions is an array of conditions that the private  is
+                  currently in.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              controlPaused:
+                description: ControlPaused is a flag that indicates if the operator
+                  is paused.
+                type: boolean
+              lastUpdate:
+                description: LastUpdate is the timestamp of the last update.
+                format: date-time
+                type: string
+              phase:
+                description: Phase is the current phase of the private .
+                enum:
+                - None
+                - Pending
+                - Creating
+                - Synchronized
+                - Failed
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: natsoperators.natz.zeiss.com
+spec:
+  group: natz.zeiss.com
+  names:
+    kind: NatsOperator
+    listKind: NatsOperatorList
+    plural: natsoperators
+    singular: natsoperator
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              enableSystemAccount:
+                description: EnableSystemAccount is a flag that indicates if the system
+                  account should be created.
+                type: boolean
+              paused:
+                default: false
+                description: Paused is a flag that indicates if the  is paused.
+                type: boolean
+              prevent_deletion:
+                default: false
+                description: PreventDeletion is a flag that indicates if the  should
+                  be locked to prevent deletion.
+                type: boolean
+              privateKey:
+                description: PrivateKey is a reference to a secret that contains the
+                  private key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
+              signingKeys:
+                description: SigningKeys is a list of references to secrets that contain
+                  the signing keys
+                items:
+                  properties:
+                    name:
+                      description: Name is the name of the key as a reference
+                      type: string
+                    namespace:
+                      description: Namespace is the namespace of the key as a reference
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            type: object
+          status:
+            properties:
+              conditions:
+                description: Conditions is an array of conditions that the operator
+                  is currently in.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              controlPaused:
+                description: ControlPaused is a flag that indicates if the operator
+                  is paused.
+                type: boolean
+              jwt:
+                description: JWT is the JWT that the operator is currently using.
+                type: string
+              lastUpdate:
+                description: LastUpdate is the timestamp of the last update.
+                format: date-time
+                type: string
+              phase:
+                allOf:
+                - enum:
+                  - None
+                  - Pending
+                  - Creating
+                  - Synchronized
+                  - Failed
+                - enum:
+                  - None
+                  - Pending
+                  - Creating
+                  - Synchronized
+                  - Failed
+                description: Phase is the current phase of the operator.
+                type: string
+              publicKey:
+                description: PublicKey is the public key that the operator is currently
+                  using.
+                type: string
+            required:
+            - jwt
+            - phase
+            - publicKey
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: natsusers.natz.zeiss.com
+spec:
+  group: natz.zeiss.com
+  names:
+    kind: NatsUser
+    listKind: NatsUserList
+    plural: natsusers
+    singular: natsuser
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NatsUser is the Schema for the natsusers API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NatsUserSpec defines the desired state of NatsUser
+            properties:
+              accountRef:
+                description: AccountRef is a reference to the account
+                properties:
+                  name:
+                    description: Name is the name of the
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the private
+                    type: string
+                required:
+                - name
+                type: object
+              allowed_connection_types:
+                description: AllowedConnectionTypes is a list of allowed connection
+                  types
+                items:
+                  type: string
+                type: array
+              bearer_token:
+                description: BearerToken is a flag that indicates if the user should
+                  be created with a bearer token
+                type: boolean
+              limits:
+                description: Limits define the limits for the user
+                properties:
+                  data:
+                    format: int64
+                    type: integer
+                  payload:
+                    format: int64
+                    type: integer
+                  src:
+                    description: |-
+                      TagList is a unique array of lower case strings
+                      All tag list methods lower case the strings in the arguments
+                    items:
+                      type: string
+                    type: array
+                  subs:
+                    format: int64
+                    type: integer
+                  times:
+                    items:
+                      description: TimeRange is used to represent a start and end
+                        time
+                      properties:
+                        end:
+                          type: string
+                        start:
+                          type: string
+                      type: object
+                    type: array
+                  times_location:
+                    type: string
+                type: object
+              permissions:
+                description: Permissions define the permissions for the user
+                properties:
+                  pub:
+                    properties:
+                      allow:
+                        description: StringList is a wrapper for an array of strings
+                        items:
+                          type: string
+                        type: array
+                      deny:
+                        description: StringList is a wrapper for an array of strings
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  resp:
+                    description: |-
+                      ResponsePermission can be used to allow responses to any reply subject
+                      that is received on a valid subscription.
+                    properties:
+                      max:
+                        type: integer
+                      ttl:
+                        description: |-
+                          A Duration represents the elapsed time between two instants
+                          as an int64 nanosecond count. The representation limits the
+                          largest representable duration to approximately 290 years.
+                        format: int64
+                        type: integer
+                    required:
+                    - max
+                    - ttl
+                    type: object
+                  sub:
+                    properties:
+                      allow:
+                        description: StringList is a wrapper for an array of strings
+                        items:
+                          type: string
+                        type: array
+                      deny:
+                        description: StringList is a wrapper for an array of strings
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
+              privateKey:
+                description: PrivateKey is a reference to a secret that contains the
+                  private key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
+              signerKeyRef:
+                description: SignerKeyRef is a reference to a secret that contains
+                  the account signing key
+                properties:
+                  name:
+                    description: Name is the name of the key as a reference
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the key as a reference
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - accountRef
+            - signerKeyRef
+            type: object
+          status:
+            description: NatsUserStatus defines the observed state of NatsUser
+            properties:
+              conditions:
+                description: Conditions is an array of conditions that the operator
+                  is currently in.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              controlPaused:
+                description: ControlPaused is a flag that indicates if the operator
+                  is paused.
+                type: boolean
+              jwt:
+                description: JWT is the JWT for the user
+                type: string
+              lastUpdate:
+                description: LastUpdate is the timestamp of the last update.
+                format: date-time
+                type: string
+              phase:
+                description: Phase is the current phase of the operator.
+                enum:
+                - None
+                - Pending
+                - Creating
+                - Synchronized
+                - Failed
+                type: string
+              publicKey:
+                description: PublicKey is the public key for the user
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

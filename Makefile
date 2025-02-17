@@ -9,6 +9,7 @@ GO_RELEASER 		?= $(GO_RUN_TOOLS) github.com/goreleaser/goreleaser
 GO_MOD 				?= $(shell ${GO} list -m)
 GO_KUSTOMIZE 		?= $(GO_RUN_TOOLS) sigs.k8s.io/kustomize/kustomize/v5
 
+BASE_DIR			?= $(CURDIR)
 PWD 				:= $(shell pwd)
 IMAGE_TAG_BASE 		?= ghcr.io/zeiss/natz-operator/operator
 IMG 				?= $(IMAGE_TAG_BASE):$(VERSION)
@@ -27,6 +28,7 @@ snapshot: ## Create a snapshot release
 
 .PHONY: release
 release: ## Create a release
+	$(GO_KUSTOMIZE) build manifests/crd > $(BASE_DIR)/helm/charts/natz-operator/templates/crds/crds.yaml
 	$(GO_RELEASER) release --clean
 
 .PHONY: up
