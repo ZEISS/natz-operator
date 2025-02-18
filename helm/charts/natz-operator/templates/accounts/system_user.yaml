@@ -16,7 +16,7 @@ spec:
   privateKey:
     name: {{ include "natz-operator.name" . }}-systemuser-private-key
   signerKeyRef:
-    name: {{ include "natz-operator.name" . }}-system-signing-key
+    name: {{ include "natz-operator.name" . }}-system-private-key
   limits:
     payload: -1
     subs: -1
