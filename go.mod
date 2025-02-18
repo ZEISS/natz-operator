@@ -13,7 +13,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
-	github.com/zeiss/pkg v0.1.22
+	github.com/zeiss/pkg v0.1.23
 	golang.org/x/mod v0.23.0
 	helm.sh/helm v2.17.0+incompatible
 	k8s.io/api v0.32.2
