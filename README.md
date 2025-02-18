@@ -23,6 +23,7 @@ helm search repo natz-operator
 
 There are three custom account resources that can be used to configure the operator.
 
+- `NatsKey`
 - `NatsOperator`
 - `NatsAccount`
 - `NatsUser`
