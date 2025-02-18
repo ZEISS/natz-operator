@@ -3,7 +3,17 @@ kind: ClusterRole
 metadata:
   name: {{ include "account-server.fullname" . }}
 rules:
+- resources:
+  - events
+  apiGroups:
+  - ""
+  - events.k8s.io
+  verbs:
+  - create
+  - patch
+  - update
 - apiGroups:
+  - ""
   - natz.zeiss.com
   resources:
   - natsaccounts
@@ -11,6 +21,7 @@ rules:
   - get
   - list
   - watch
+  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

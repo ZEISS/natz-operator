@@ -1,0 +1,17 @@
+{{- if .Values.config.operator.create }}
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsConfig
+metadata:
+  name: nats-default-config
+spec:
+  operatorRef:
+    name: {{ include "natz-operator.name" . }}
+  systemAccountRef:
+    name: {{ include "natz-operator.name" . }}-system
+  config:
+    http_port: 8223
+    jetstream:
+      enabled: true
+      store_dir: /data
+      max_file_store: 10737418240
+{{- end }}

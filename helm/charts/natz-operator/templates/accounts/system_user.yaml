@@ -1,0 +1,24 @@
+{{- if .Values.config.operator.create }}
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: {{ include "natz-operator.name" . }}-systemuser-private-key
+spec:
+  type: User
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsUser
+metadata:
+  name: {{ include "natz-operator.name" . }}-system
+spec:
+  accountRef:
+    name: {{ include "natz-operator.name" . }}-system
+  privateKey:
+    name: {{ include "natz-operator.name" . }}-systemuser-private-key
+  signerKeyRef:
+    name: {{ include "natz-operator.name" . }}-system-signing-key
+  limits:
+    payload: -1
+    subs: -1
+    data: -1
+{{- end }}

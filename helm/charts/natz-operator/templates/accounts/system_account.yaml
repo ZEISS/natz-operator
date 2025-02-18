@@ -1,0 +1,50 @@
+{{- if .Values.config.operator.create }}
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: {{ include "natz-operator.name" . }}-system-private-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: {{ include "natz-operator.name" . }}-system-signing-key
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsAccount
+metadata:
+  name: {{ include "natz-operator.name" . }}-system
+spec:
+  signerKeyRef:
+    name: {{ include "natz-operator.name" . }}-operator-private-key
+  privateKey:
+    name: {{ include "natz-operator.name" . }}-system-private-key
+  signingKeys:
+    - name: {{ include "natz-operator.name" . }}-system-signing-key
+  exports:
+    - name: account-monitoring-services
+      subject: $SYS.REQ.ACCOUNT.*.*
+      type: 2
+      response_type: Stream
+      account_token_position: 4
+      description: "Request account specific monitoring services for: SUBSZ, CONNZ, LEAFZ, JSZ and INFO"
+      info_url: "https://docs.nats.io/nats-server/configuration/sys_accounts"
+    - name: account-monitoring-streams
+      subject: $SYS.ACCOUNT.*.>"
+      type: 1
+      account_token_position: 3
+      description: "Account specific monitoring stream"
+      info_url: "https://docs.nats.io/nats-server/configuration/sys_accounts"
+  limits:
+    exports: -1
+    imports: -1
+    subs: -1
+    payload: -1
+    data: -1
+    conn: -1
+    wildcards: true
+    disallow_bearer: true
+{{- end }}

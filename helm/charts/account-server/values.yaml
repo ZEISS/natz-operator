@@ -63,11 +63,6 @@ global:
 
 ## NATZ Config
 config:
-  # -- Operator configuration
-  # Create a new operator and system account for NATS.
-  operator:
-    # -- create is enabling to create a new operator and system account for NATS
-    create: true
 
 ## Account Server
 controller:
@@ -79,7 +74,7 @@ controller:
   replicas: 1
 
   # -- SecretName of the NATS credentials
-  secretName: natsuser-system
+  secretName: natz-operator-system-credentials
 
   # -- NATS configuration
   nats:
