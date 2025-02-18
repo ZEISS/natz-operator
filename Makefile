@@ -28,7 +28,6 @@ snapshot: ## Create a snapshot release
 
 .PHONY: release
 release: ## Create a release
-	$(GO_KUSTOMIZE) build manifests/crd > $(BASE_DIR)/helm/charts/natz-operator/templates/crds/crds.yaml
 	$(GO_RELEASER) release --clean
 
 .PHONY: up
@@ -66,6 +65,7 @@ minikube-push: ## Push the image to the minikube docker daemon.
 
 .PHONY: generate
 generate: ## Generate code.
+	$(GO_KUSTOMIZE) build manifests/crd > $(BASE_DIR)/helm/charts/natz-operator/crds/crds.yaml
 	$(GO) generate ./...
 
 .PHONY: fmt

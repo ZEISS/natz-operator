@@ -87,6 +87,21 @@ type NatsOperatorList struct {
 	Items           []NatsOperator `json:"items"`
 }
 
+// IsSynchronized returns true if the operator is synchronized.
+func (o *NatsOperator) IsSynchronized() bool {
+	return o.Status.Phase == OperatorPhaseSynchronized
+}
+
+// IsFailed returns true if the operator is failed.
+func (o *NatsOperator) IsFailed() bool {
+	return o.Status.Phase == OperatorPhaseFailed
+}
+
+// IsPaused returns true if the operator is paused.
+func (o *NatsOperator) IsPaused() bool {
+	return o.Status.ControlPaused
+}
+
 func init() {
 	SchemeBuilder.Register(&NatsOperator{}, &NatsOperatorList{})
 }

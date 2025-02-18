@@ -106,6 +106,10 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 		return err
 	}
 
+	if !operator.IsSynchronized() {
+		return errors.NewInvalid(operator.GroupVersionKind().GroupKind(), operator.Name, nil)
+	}
+
 	systemAccount := &natsv1alpha1.NatsAccount{}
 	systemAccountName := client.ObjectKey{
 		Namespace: obj.Namespace,
@@ -114,6 +118,10 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 
 	if err := r.Get(ctx, systemAccountName, systemAccount); err != nil {
 		return err
+	}
+
+	if !systemAccount.IsSynchronized() {
+		return errors.NewInvalid(systemAccount.GroupVersionKind().GroupKind(), systemAccount.Name, nil)
 	}
 
 	defaultConfig := natsv1alpha1.Default()

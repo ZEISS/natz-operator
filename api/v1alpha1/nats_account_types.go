@@ -159,6 +159,21 @@ type NatsAccountList struct {
 	Items           []NatsAccount `json:"items"`
 }
 
+// IsSynchronized returns true if the account is synchronized.
+func (a *NatsAccount) IsSynchronized() bool {
+	return a.Status.Phase == AccountPhaseSynchronized
+}
+
+// IsFailed returns true if the account is failed.
+func (a *NatsAccount) IsFailed() bool {
+	return a.Status.Phase == AccountPhaseFailed
+}
+
+// IsPaused returns true if the account is paused.
+func (a *NatsAccount) IsPaused() bool {
+	return a.Status.ControlPaused
+}
+
 func init() {
 	SchemeBuilder.Register(&NatsAccount{}, &NatsAccountList{})
 }

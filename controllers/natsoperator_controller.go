@@ -6,11 +6,14 @@ import (
 	"math"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -37,6 +40,7 @@ const (
 	EventReasonOperatorSecretCreateSucceeded EventReason = "OperatorSecretCreateSucceeded"
 	EventReasonOperatorSecretCreateFailed    EventReason = "OperatorSecretCreateFailed"
 	EventReasonOperatorSynchronized          EventReason = "OperatorSynchronized"
+	EventReasonOperatorFailed                EventReason = "OperatorFailed"
 	EventReasonOperatorSynchronizeFailed     EventReason = "OperatorSynchronizeFailed"
 )
 
@@ -76,6 +80,11 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	if operator.Spec.Paused {
 		return r.reconcilePaused(ctx, operator)
+	}
+
+	// get latest version of the account
+	if err := r.Get(ctx, req.NamespacedName, operator); err != nil {
+		return reconcile.Result{}, err
 	}
 
 	err := r.reconcileResources(ctx, operator)
@@ -177,9 +186,15 @@ func (r *NatsOperatorReconciler) IsPaused(obj *natsv1alpha1.NatsOperator) bool {
 
 // ManageError ...
 func (r *NatsOperatorReconciler) ManageError(ctx context.Context, obj *natsv1alpha1.NatsOperator, err error) (ctrl.Result, error) {
-	obj.Status.Phase = natsv1alpha1.OperatorPhaseFailed
+	logger := log.FromContext(ctx)
+	logger.Error(err, "reconciling operator", "operator", obj.Name)
+
+	if errors.IsNotFound(err) {
+		return ctrl.Result{Requeue: true}, nil
+	}
 
 	status.SetNatzOperatorCondition(obj, status.NewOperatorFailedCondition(obj, err))
+	obj.Status.Phase = natsv1alpha1.OperatorPhaseFailed
 
 	if err := r.Client.Status().Update(ctx, obj); err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
@@ -197,27 +212,13 @@ func (r *NatsOperatorReconciler) ManageError(ctx context.Context, obj *natsv1alp
 
 // ManageSuccess ...
 func (r *NatsOperatorReconciler) ManageSuccess(ctx context.Context, obj *natsv1alpha1.NatsOperator) (ctrl.Result, error) {
-	if r.IsSynchronized(obj) {
-		return ctrl.Result{}, nil
-	}
-
 	obj.Status.Phase = natsv1alpha1.OperatorPhaseSynchronized
+	obj.Status.LastUpdate = metav1.Now()
 	status.SetNatzOperatorCondition(obj, status.NewOperatorSychronizedCondition(obj))
 
-	if r.IsCreating(obj) {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if err := r.Client.Status().Update(ctx, obj); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if r.IsCreating(obj) {
-		return ctrl.Result{Requeue: true}, nil
+	err := r.Status().Update(ctx, obj)
+	if err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: time.Second}, err
 	}
 
 	r.Recorder.Event(obj, corev1.EventTypeNormal, conv.String(EventReasonOperatorSynchronized), "operator synchronized")
