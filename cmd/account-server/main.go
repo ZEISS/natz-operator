@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"os"
 
@@ -28,8 +29,11 @@ var (
 var build = fmt.Sprintf("%s (%s) (%s)", version, commit, date)
 
 type flags struct {
-	metricsAddr string
-	probeAddr   string
+	enableLeaderElection bool
+	metricsAddr          string
+	probeAddr            string
+	secureMetrics        bool
+	enableHTTP2          bool
 }
 
 var f = &flags{}
@@ -48,8 +52,11 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().StringVar(&f.metricsAddr, "metrics-bind-address", ":8084", "metrics endpoint")
-	rootCmd.Flags().StringVar(&f.probeAddr, "health-probe-bind-address", ":8085", "health probe")
+	rootCmd.Flags().BoolVar(&f.enableLeaderElection, "leader-elect", f.enableLeaderElection, "only one controller")
+	rootCmd.Flags().StringVar(&f.metricsAddr, "metrics-bind-address", ":8080", "metrics endpoint")
+	rootCmd.Flags().StringVar(&f.probeAddr, "health-probe-bind-address", ":8081", "health probe")
+	rootCmd.Flags().BoolVar(&f.secureMetrics, "secure-metrics", f.secureMetrics, "serve metrics over https")
+	rootCmd.Flags().BoolVar(&f.enableHTTP2, "enable-http2", f.enableHTTP2, "enable http/2")
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(natzv1alpha1.AddToScheme(scheme))
@@ -61,13 +68,33 @@ func run(ctx context.Context) error {
 		Development: true,
 	}
 
+	// if the enable-http2 flag is false (the default), http/2 should be disabled
+	// due to its vulnerabilities. More specifically, disabling http/2 will
+	// prevent from being vulnerable to the HTTP/2 Stream Cancellation and
+	// Rapid Reset CVEs. For more information see:
+	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
+	// - https://github.com/advisories/GHSA-4374-p667-p6c8
+	disableHTTP2 := func(c *tls.Config) {
+		setupLog.Info("disabling http/2")
+		c.NextProtos = []string{"http/1.1"}
+	}
+
+	tlsOpts := []func(*tls.Config){}
+	if !f.enableHTTP2 {
+		tlsOpts = append(tlsOpts, disableHTTP2)
+	}
+
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                server.Options{BindAddress: f.metricsAddr},
+		Scheme: scheme,
+		Metrics: server.Options{
+			BindAddress:   f.metricsAddr,
+			SecureServing: f.secureMetrics,
+			TLSOpts:       tlsOpts,
+		},
 		HealthProbeBindAddress: f.probeAddr,
-		LeaderElection:         false,
+		LeaderElection:         f.enableLeaderElection,
 		BaseContext:            func() context.Context { return ctx },
 	})
 	if err != nil {
