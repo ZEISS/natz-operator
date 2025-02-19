@@ -20,7 +20,8 @@
     "ghcr.io/zeiss/devcontainer-features/k9s:1": {},
     "ghcr.io/devcontainers-extra/features/kind:1": {},
     "ghcr.io/zeiss/devcontainer-features/air:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/ZEISS/devcontainer-features/ghc:1": {}
   },
   "hostRequirements": {
     "cpus": 8,

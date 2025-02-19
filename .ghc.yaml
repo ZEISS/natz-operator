@@ -1,0 +1,7 @@
+version: 1
+name: natz-operator
+description: Operator for NATS Accounting
+hooks:
+  pre-commit:
+    - make test
+    - make lint
