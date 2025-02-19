@@ -105,7 +105,7 @@ func (r *NatsAccountReconciler) reconcileResources(ctx context.Context, account 
 func (r *NatsAccountReconciler) reconcileAccount(ctx context.Context, account *natsv1alpha1.NatsAccount) error {
 	sk := &natsv1alpha1.NatsKey{}
 	skName := client.ObjectKey{
-		Namespace: account.Namespace,
+		Namespace: utilx.Or(account.Spec.SignerKeyRef.Namespace, account.Namespace),
 		Name:      account.Spec.SignerKeyRef.Name,
 	}
 

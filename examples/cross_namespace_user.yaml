@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: example
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsaccount-sample-private-key
+  namespace: example
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsaccount-sample-signing-key
+  namespace: example
+spec:
+  type: Account
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsAccount
+metadata:
+  name: natsaccount-sample
+  namespace: example
+spec:
+  signerKeyRef:
+    name: natsoperator-sample-private-key
+    namespace: default
+  privateKey:
+    name: natsaccount-sample-private-key
+    namespace: example
+  signingKeys:
+    - name: natsaccount-sample-signing-key
+      namespace: example
+  imports: []
+  # Define the exports of the accounts
+  exports:
+    - name: "ORDERS"
+      subject: "app.orders.>"
+      token_req: true
+      type: 1
+  limits:
+    conn: -1
+    imports: -1
+    exports: -1
+    subs: -1
+    payload: -1
+    data: -1
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsKey
+metadata:
+  name: natsuser-sample-private-key
+  namespace: example
+spec:
+  type: User
+---
+apiVersion: natz.zeiss.com/v1alpha1
+kind: NatsUser
+metadata:
+  name: natsuser-sample
+  namespace: example
+spec:
+  accountRef:
+    name: natsaccount-sample
+    namespace: example
+  privateKey:
+    name: natsuser-sample-private-key
+    namespace: example
+  signerKeyRef:
+    name: natsaccount-sample-signing-key
+    namespace: example
+  permissions:
+    sub:
+      allow:
+        - "app.input.>"
+        - "app.process.data"
+    pub:
+      allow:
+        - "app.output.>"
+    resp:
+      # Allow request/reply
+      max: 1
+      ttl: -1
+  limits:
+    payload: -1
+    subs: -1
+    data: -1
