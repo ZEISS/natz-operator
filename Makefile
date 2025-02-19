@@ -58,11 +58,6 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 setup: ## Setup the development environment.
 	$(PWD)/scripts/setup.sh
 
-.PHONY: minikube-push
-minikube-push: ## Push the image to the minikube docker daemon.
-	minikube image rm ${IMG}
-	minikube image load ${IMG}
-
 .PHONY: generate
 generate: ## Generate code.
 	$(GO_KUSTOMIZE) build manifests/crd > $(BASE_DIR)/helm/charts/natz-operator/crds/crds.yaml

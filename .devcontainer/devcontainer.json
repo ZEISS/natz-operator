@@ -14,14 +14,13 @@
   "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
   "postCreateCommand": "bash scripts/postCreateCommand.sh",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/go:1": {},
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
-    "ghcr.io/zeiss/devcontainer-features/k9s:1": {},
     "ghcr.io/devcontainers-extra/features/kind:1": {},
-    "ghcr.io/zeiss/devcontainer-features/air:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/ZEISS/devcontainer-features/ghc:1": {}
+    "ghcr.io/devcontainers/features/go:1": {},
+    "ghcr.io/zeiss/devcontainer-features/air:1": {},
+    "ghcr.io/ZEISS/devcontainer-features/ghc:1": {},
+    "ghcr.io/zeiss/devcontainer-features/k9s:1": {}
   },
   "hostRequirements": {
     "cpus": 8,
