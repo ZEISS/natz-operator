@@ -11,8 +11,18 @@ spec:
     - name: harry
       namespace: default
   config:
+    host: 0.0.0.0
+    port: 4222
+    resolver:
+      type: full
+      dir: /data/resolver
+      allow_delete: true
+      interval: 2m
+      limit: 0
+      timeout: 5s
     http_port: 8223
     jetstream:
       enabled: true
       store_dir: /data
       max_file_store: 10737418240
+    pid_file: /var/run/nats/nats.pid

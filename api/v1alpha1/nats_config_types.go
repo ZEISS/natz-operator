@@ -1,7 +1,6 @@
 package v1alpha1
 
 import (
-	"github.com/zeiss/pkg/utilx"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,15 +16,6 @@ func New() *Config {
 	return &Config{
 		Resolver: Resolver{},
 	}
-}
-
-// Default returns the default configuration.
-func Default() *Config {
-	cfg := New()
-
-	utilx.SetDefaults(cfg)
-
-	return cfg
 }
 
 // Config ...

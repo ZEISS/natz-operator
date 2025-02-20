@@ -124,15 +124,15 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 		return errors.NewInvalid(systemAccount.GroupVersionKind().GroupKind(), systemAccount.Name, nil)
 	}
 
-	defaultConfig := natsv1alpha1.Default()
-	err := copy.CopyWithOption(&obj.Spec.Config, defaultConfig, copy.WithIgnoreEmpty())
+	cfg := natsv1alpha1.Config{}
+	err := copy.CopyWithOption(&cfg, obj.Spec.Config, copy.WithIgnoreEmpty())
 	if err != nil {
 		return err
 	}
 
-	defaultConfig.SystemAccount = systemAccount.Status.PublicKey
-	defaultConfig.Operator = operator.Status.JWT
-	defaultConfig.ResolverPreload = natsv1alpha1.ResolverPreload{
+	cfg.SystemAccount = systemAccount.Status.PublicKey
+	cfg.Operator = operator.Status.JWT
+	cfg.ResolverPreload = natsv1alpha1.ResolverPreload{
 		systemAccount.Status.PublicKey: systemAccount.Status.JWT,
 	}
 
@@ -149,7 +149,7 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 	// 	config.Gateway.Gateways = append(config.Gateway.Gateways, gw)
 	// }
 
-	b, err := json.Marshal(defaultConfig)
+	b, err := json.Marshal(cfg)
 	if err != nil {
 		return err
 	}
