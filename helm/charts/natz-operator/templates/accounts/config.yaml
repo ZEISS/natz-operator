@@ -18,7 +18,7 @@ spec:
       interval: 2m
       limit: 0
       timeout: 5s
-    http_port: 8223
+    http_port: 8222
     jetstream:
       enabled: true
       store_dir: /data
