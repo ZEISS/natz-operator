@@ -2,6 +2,26 @@ apiVersion: v1
 entries:
   account-server:
   - apiVersion: v2
+    appVersion: 0.9.2
+    created: "2025-02-20T13:19:24.474845604Z"
+    description: 'A helm chart for the account-server that provides NATS accounting. '
+    digest: 70c909c1e78dd96e47771ddfb5e1d098f6f8bb034deee61e743166c3e82b32d4
+    home: https://github.com/zeiss/natz-operator
+    keywords:
+    - nats
+    - accounting
+    kubeVersion: '>=1.26.0-0'
+    maintainers:
+    - name: Sebastian Doell
+      url: https://github.com/katallaxie
+    name: account-server
+    sources:
+    - https://github.com/zeiss/natz-operator/tree/main/helm/charts/account-server
+    - https://github.com/zeiss/natz-operator
+    urls:
+    - https://github.com/ZEISS/natz-operator/releases/download/account-server-0.9.2/account-server-0.9.2.tgz
+    version: 0.9.2
+  - apiVersion: v2
     appVersion: 0.9.1
     created: "2025-02-20T08:03:30.067509421Z"
     description: 'A helm chart for the account-server that provides NATS accounting. '
@@ -43,6 +63,26 @@ entries:
     version: 0.9.0
   natz-operator:
   - apiVersion: v2
+    appVersion: 0.9.2
+    created: "2025-02-20T13:19:24.599735876Z"
+    description: 'A helm chart for the natz-operator that provides NATS accounting. '
+    digest: 95a580c7ab6fe5a0bc218b3d75e50fa766ff976b0979e3a983f31c06caf48d1a
+    home: https://github.com/zeiss/natz-operator
+    keywords:
+    - nats
+    - accounting
+    kubeVersion: '>=1.26.0-0'
+    maintainers:
+    - name: Sebastian Doell
+      url: https://github.com/katallaxie
+    name: natz-operator
+    sources:
+    - https://github.com/zeiss/natz-operator/tree/main/helm/charts/natz-operator
+    - https://github.com/zeiss/natz-operator
+    urls:
+    - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-0.9.2/natz-operator-0.9.2.tgz
+    version: 0.9.2
+  - apiVersion: v2
     appVersion: 0.9.1
     created: "2025-02-20T08:03:30.190493256Z"
     description: 'A helm chart for the natz-operator that provides NATS accounting. '
@@ -82,4 +122,4 @@ entries:
     urls:
     - https://github.com/ZEISS/natz-operator/releases/download/natz-operator-0.9.0/natz-operator-0.9.0.tgz
     version: 0.9.0
-generated: "2025-02-20T08:03:30.190505369Z"
+generated: "2025-02-20T13:19:24.599756285Z"
