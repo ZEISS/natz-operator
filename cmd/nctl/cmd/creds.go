@@ -34,7 +34,7 @@ func runCreds(ctx context.Context) error {
 		return err
 	}
 
-	secret, err := clientset.CoreV1().Secrets("default").Get(ctx, config.Creds.User, metav1.GetOptions{})
+	secret, err := clientset.CoreV1().Secrets(config.Namespace).Get(ctx, config.Creds.User, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
