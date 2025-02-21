@@ -28,7 +28,7 @@ global:
     # -- If defined, a repository applied to all NATZ deployments
     repository: ghcr.io/zeiss/natz-operator/account-server
     # -- Overrides the global natz image tag whose default is the chart appVersion
-    tag: "latest"
+    tag: ""
     # -- If defined, a imagePullPolicy applied to all natz deployments
     imagePullPolicy: IfNotPresent
 
