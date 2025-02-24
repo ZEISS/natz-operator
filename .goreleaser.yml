@@ -54,7 +54,7 @@ dockers:
       - operator
     image_templates:
       - "ghcr.io/zeiss/{{.ProjectName}}/operator:latest"
-      - "ghcr.io/zeiss/{{.ProjectName}}/operator:{{.Tag}}"
+      - "ghcr.io/zeiss/{{.ProjectName}}/operator:{{.Version}}"
       - "ghcr.io/zeiss/{{.ProjectName}}/operator"
     build_flag_templates:
       - "--pull"
