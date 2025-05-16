@@ -18,7 +18,7 @@ require (
 	helm.sh/helm v2.17.0+incompatible
 	k8s.io/api v0.33.1
 	k8s.io/apimachinery v0.33.1
-	k8s.io/client-go v0.33.0
+	k8s.io/client-go v0.33.1
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/controller-tools v0.18.0
 )
