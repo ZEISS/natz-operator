@@ -1,6 +1,7 @@
 module tools
 
-go 1.23.0
+go 1.24.0
+
 toolchain go1.24.1
 
 require (
@@ -9,7 +10,7 @@ require (
 	github.com/goreleaser/goreleaser v1.26.2
 	github.com/zeiss/pkg v0.1.23
 	gotest.tools/gotestsum v1.12.2
-	k8s.io/code-generator v0.33.0
+	k8s.io/code-generator v0.33.1
 	mvdan.cc/gofumpt v0.8.0
 	sigs.k8s.io/kustomize/kustomize/v5 v5.6.0
 )
