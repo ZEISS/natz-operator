@@ -10,7 +10,7 @@ require (
 	github.com/goreleaser/goreleaser v1.26.2
 	github.com/zeiss/pkg v0.1.23
 	gotest.tools/gotestsum v1.12.3
-	k8s.io/code-generator v0.33.3
+	k8s.io/code-generator v0.33.4
 	mvdan.cc/gofumpt v0.8.0
 	sigs.k8s.io/kustomize/kustomize/v5 v5.7.1
 )
