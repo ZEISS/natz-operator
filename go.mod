@@ -16,7 +16,7 @@ require (
 	github.com/zeiss/pkg v0.1.23
 	golang.org/x/mod v0.27.0
 	helm.sh/helm v2.17.0+incompatible
-	k8s.io/api v0.33.4
+	k8s.io/api v0.34.0
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.33.4
 	sigs.k8s.io/controller-runtime v0.21.0
