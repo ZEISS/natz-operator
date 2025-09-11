@@ -9,7 +9,7 @@ require (
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/goreleaser/goreleaser v1.26.2
 	github.com/zeiss/pkg v0.1.23
-	gotest.tools/gotestsum v1.12.3
+	gotest.tools/gotestsum v1.13.0
 	k8s.io/code-generator v0.34.0
 	mvdan.cc/gofumpt v0.9.1
 	sigs.k8s.io/kustomize/kustomize/v5 v5.7.1
@@ -177,7 +177,7 @@ require (
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/firefart/nonamedreturns v1.0.5 // indirect
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/ghostiam/protogetter v0.3.9 // indirect
@@ -455,9 +455,9 @@ require (
 	golang.org/x/mod v0.27.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.27.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/term v0.34.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/term v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
