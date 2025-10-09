@@ -9,7 +9,7 @@ require (
 	github.com/nats-io/nats.go v1.46.1
 	github.com/nats-io/nkeys v0.4.11
 	github.com/pkg/errors v0.9.1
-	github.com/samber/lo v1.51.0
+	github.com/samber/lo v1.52.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
