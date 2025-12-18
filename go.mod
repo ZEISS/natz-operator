@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/nats-io/jwt/v2 v2.8.0
-	github.com/nats-io/nats.go v1.47.0
+	github.com/nats-io/nats.go v1.48.0
 	github.com/nats-io/nkeys v0.4.12
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.52.0
