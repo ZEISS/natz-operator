@@ -12,7 +12,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/zeiss/pkg v0.1.23
-	golang.org/x/mod v0.31.0
+	golang.org/x/mod v0.32.0
 	helm.sh/helm v2.17.0+incompatible
 	k8s.io/api v0.35.0
 	k8s.io/apimachinery v0.35.0
