@@ -3,7 +3,7 @@ module github.com/zeiss/natz-operator
 go 1.25.0
 
 require (
-	github.com/nats-io/jwt/v2 v2.8.0
+	github.com/nats-io/jwt/v2 v2.8.1
 	github.com/nats-io/nats.go v1.49.0
 	github.com/nats-io/nkeys v0.4.15
 	github.com/pkg/errors v0.9.1
