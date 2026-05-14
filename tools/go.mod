@@ -8,7 +8,7 @@ require (
 	github.com/goreleaser/goreleaser v1.26.2
 	github.com/zeiss/pkg v0.1.23
 	gotest.tools/gotestsum v1.13.0
-	k8s.io/code-generator v0.36.0
+	k8s.io/code-generator v0.36.1
 	mvdan.cc/gofumpt v0.10.0
 	sigs.k8s.io/kustomize/kustomize/v5 v5.8.1
 )
@@ -514,7 +514,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
-	k8s.io/apimachinery v0.36.0 // indirect
+	k8s.io/apimachinery v0.36.1 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
