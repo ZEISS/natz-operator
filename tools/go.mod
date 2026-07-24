@@ -8,7 +8,7 @@ require (
 	github.com/goreleaser/goreleaser v1.26.2
 	github.com/zeiss/pkg v0.1.23
 	gotest.tools/gotestsum v1.13.0
-	k8s.io/code-generator v0.36.2
+	k8s.io/code-generator v0.36.3
 	mvdan.cc/gofumpt v0.10.0
 	sigs.k8s.io/kustomize/kustomize/v5 v5.8.1
 )
@@ -509,7 +509,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
-	k8s.io/apimachinery v0.36.2 // indirect
+	k8s.io/apimachinery v0.36.3 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
@@ -520,7 +520,7 @@ require (
 	sigs.k8s.io/kustomize/cmd/config v0.21.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.21.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.3 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
