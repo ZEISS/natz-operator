@@ -143,7 +143,7 @@ func (r *NatsAccountServer) reconcileAccount(_ context.Context, obj *natsv1alpha
 
 // IsCreating ...
 func (r *NatsAccountServer) IsCreating(obj *natsv1alpha1.NatsAccount) bool {
-	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(0, obj.Status.Conditions...))
 }
 
 // IsSynchronized ...

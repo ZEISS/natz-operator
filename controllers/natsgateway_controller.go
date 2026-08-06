@@ -191,7 +191,7 @@ func (r *NatsGatewayReconciler) ManageError(ctx context.Context, obj *natsv1alph
 
 // IsCreating ...
 func (r *NatsGatewayReconciler) IsCreating(obj *natsv1alpha1.NatsGateway) bool {
-	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(0, obj.Status.Conditions...))
 }
 
 // IsSynchronized ...

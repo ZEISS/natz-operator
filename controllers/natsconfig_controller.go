@@ -19,7 +19,7 @@ import (
 	natsv1alpha1 "github.com/zeiss/natz-operator/api/v1alpha1"
 	"github.com/zeiss/natz-operator/pkg/status"
 	"github.com/zeiss/pkg/conv"
-	"github.com/zeiss/pkg/copy"
+	"github.com/zeiss/pkg/copyx"
 	"github.com/zeiss/pkg/slices"
 	"github.com/zeiss/pkg/utilx"
 )
@@ -125,7 +125,7 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 	}
 
 	cfg := natsv1alpha1.Config{}
-	err := copy.CopyWithOption(&cfg, obj.Spec.Config, copy.WithIgnoreEmpty())
+	err := copyx.CopyWithOption(&cfg, obj.Spec.Config, copyx.WithIgnoreEmpty())
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (r *NatsConfigReconciler) reconcileConfig(ctx context.Context, obj *natsv1a
 
 // IsCreating ...
 func (r *NatsConfigReconciler) IsCreating(obj *natsv1alpha1.NatsConfig) bool {
-	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(0, obj.Status.Conditions...))
 }
 
 // IsSynchronized ...

@@ -217,7 +217,7 @@ func (r *NatsPrivateKeyReconciler) reconcileDelete(ctx context.Context, sk *nats
 
 // IsCreating ...
 func (r *NatsPrivateKeyReconciler) IsCreating(obj *natsv1alpha1.NatsKey) bool {
-	return utilx.Or(obj.Status.Conditions == nil, slices.Len(obj.Status.Conditions) == 0)
+	return utilx.Or(obj.Status.Conditions == nil, slices.Len(0, obj.Status.Conditions...))
 }
 
 // IsSynchronized ...
