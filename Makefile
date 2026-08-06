@@ -9,6 +9,7 @@ GO_RELEASER 		?= $(GO_TOOL) github.com/goreleaser/goreleaser/v2
 GO_MOD 					?= $(shell ${GO} list -m)
 GO_LINT 				?= $(GO_TOOL) github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 GO_KUSTOMIZE 		?= $(GO_TOOL)sigs.k8s.io/kustomize/kustomize/v5
+GO_HELM_UPDATE 		?= $(GO_RUN_TOOLS) github.com/zeiss/pkg/cmd/helm/update
 
 BASE_DIR				?= $(CURDIR)
 PWD 						?= $(shell pwd)
@@ -63,6 +64,11 @@ setup: ## Setup the development environment.
 generate: ## Generate code.
 	$(GO_KUSTOMIZE) build manifests/crd > $(BASE_DIR)/helm/charts/natz-operator/crds/crds.yaml
 	$(GO) generate ./...
+
+.PHONY: helm/update
+helm/update: ## Update helm dependencies.
+	$(GO_HELM_UPDATE) --file helm/charts/natz-operator/Chart.yaml --version ${RELEASE_VERSION}
+	$(GO_HELM_UPDATE) --file helm/charts/account-server/Chart.yaml --version ${RELEASE_VERSION}
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.

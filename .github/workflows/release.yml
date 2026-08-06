@@ -12,7 +12,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   IMAGE_NAME: zeiss/natz-operator
   REGISTRY: ghcr.io
-      
+
 jobs:
   test:
     permissions:
@@ -57,9 +57,7 @@ jobs:
           KO_DOCKER_REPO: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           DIST_DIR: /tmp/dist
         if: success()
-      - run: |
-          go run internal/updater/main.go --file helm/charts/natz-operator/Chart.yaml --version ${{ env.RELEASE_VERSION }}
-          go run internal/updater/main.go --file helm/charts/account-server/Chart.yaml --version ${{ env.RELEASE_VERSION }}
+      - run: make helm/update
       - uses: azure/setup-helm@v5
         with:
           version: v3.11.2
