@@ -141,7 +141,7 @@ func (r *NatsUserReconciler) reconcileCredentials(ctx context.Context, user *nat
 	secret.Type = natsv1alpha1.SecretUserCredentialsName
 	secret.Data = map[string][]byte{
 		natsv1alpha1.SecretUserJWTKey:   []byte(user.Status.JWT),
-		natsv1alpha1.SecretUserCredsKey: []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, user.Status.JWT, privateKey.Data[natsv1alpha1.SecretSeedDataKey])),
+		natsv1alpha1.SecretUserCredsKey: fmt.Appendf([]byte{}, ACCOUNT_TEMPLATE, user.Status.JWT, privateKey.Data[natsv1alpha1.SecretSeedDataKey]),
 	}
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
