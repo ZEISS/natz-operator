@@ -18,7 +18,7 @@ tool (
 )
 
 require (
-	github.com/nats-io/jwt/v2 v2.8.2
+	github.com/nats-io/jwt/v2 v2.8.3
 	github.com/nats-io/nats.go v1.55.0
 	github.com/nats-io/nkeys v0.4.17
 	github.com/pkg/errors v0.9.1
